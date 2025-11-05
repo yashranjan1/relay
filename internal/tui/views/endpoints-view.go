@@ -132,7 +132,7 @@ func NewEndpointsView(epManager *endpoints.EndpointsManager, order int) *Endpoin
 	config.GetItemsFunc = epListFunc
 	config.ItemMapper = itemMapperEp
 	config.AdditionalKeymaps = keybinds
-	config.Source = "collections"
+	config.Source = "endpoints"
 
 	view.list = optionsProvider.NewOptionsProvider(config)
 
