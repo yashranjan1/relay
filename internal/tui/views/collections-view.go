@@ -132,7 +132,7 @@ func itemMapper(items []collections.CollectionEntity, endpointsManager *endpoint
 
 func NewCollectionsView(collManager *collections.CollectionsManager, endpointsManager *endpoints.EndpointsManager, order int) *CollectionsView {
 	keybinds := keybinds.NewListKeyMap()
-	config := defaultListConfig[collections.CollectionEntity, string](keybinds)
+	config := defaultListConfig[collections.CollectionEntity, string](keybinds, createCollectionDelegate)
 
 	config.GetItemsFunc = collManager.List
 	config.ItemMapper = func(items []collections.CollectionEntity) []list.Item {

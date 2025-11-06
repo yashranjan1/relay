@@ -123,7 +123,7 @@ func NewEndpointsView(epManager *endpoints.EndpointsManager, order int) *Endpoin
 	}
 
 	keybinds := keybinds.NewListKeyMap()
-	config := defaultListConfig[endpoints.EndpointEntity, database.Endpoint](keybinds)
+	config := defaultListConfig[endpoints.EndpointEntity, database.Endpoint](keybinds, createEndpointsDelegate)
 
 	epListFunc := func(ctx context.Context) ([]endpoints.EndpointEntity, error) {
 		return epManager.ListByCollection(ctx, view.collection.ID)

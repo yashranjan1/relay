@@ -7,7 +7,7 @@ import (
 	"github.com/maniac-en/req/internal/tui/styles"
 )
 
-func createDelegate() list.DefaultDelegate {
+func createCollectionDelegate() list.ItemDelegate {
 	d := list.NewDefaultDelegate()
 
 	d.Styles.SelectedTitle = styles.SelectedListStyle
@@ -16,14 +16,14 @@ func createDelegate() list.DefaultDelegate {
 	return d
 }
 
-func defaultListConfig[T, U any](binds *keybinds.ListKeyMap) *optionsProvider.ListConfig[T, U] {
+func defaultListConfig[T, U any](binds *keybinds.ListKeyMap, delegateCreator func() list.ItemDelegate) *optionsProvider.ListConfig[T, U] {
 	config := optionsProvider.ListConfig[T, U]{
 		ShowPagination:   true,
 		ShowStatusBar:    false,
 		ShowHelp:         false,
 		ShowTitle:        false,
 		FilteringEnabled: true,
-		Delegate:         createDelegate(),
+		Delegate:         delegateCreator(),
 		KeyMap: list.KeyMap{
 			CursorUp:             binds.CursorUp,
 			CursorDown:           binds.CursorDown,
