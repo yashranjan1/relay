@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/maniac-en/req/internal/backend/database"
 	"github.com/maniac-en/req/internal/backend/endpoints"
 	optionsProvider "github.com/maniac-en/req/internal/tui/components/OptionsProvider"
@@ -15,13 +16,22 @@ import (
 	"github.com/maniac-en/req/internal/tui/messages"
 )
 
+type epFocused string
+
+const (
+	listView    = "listview"
+	requestView = "requestview"
+)
+
 type EndpointsView struct {
-	height     int
-	collection optionsProvider.Option
-	width      int
-	order      int
-	list       optionsProvider.OptionsProvider[endpoints.EndpointEntity, database.Endpoint]
-	manager    *endpoints.EndpointsManager
+	height      int
+	focused     epFocused
+	collection  optionsProvider.Option
+	width       int
+	order       int
+	list        optionsProvider.OptionsProvider[endpoints.EndpointEntity, database.Endpoint]
+	requestView ViewInterface
+	manager     *endpoints.EndpointsManager
 }
 
 func (e *EndpointsView) Init() tea.Cmd {
@@ -61,15 +71,20 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		e.manager.Delete(context.Background(), msg.ItemID)
 		e.list.RefreshItems()
 	}
+	switch e.focused {
+	case listView:
+		e.list, cmd = e.list.Update(msg)
+	case requestView:
+		e.requestView, cmd = e.requestView.Update(msg)
+	}
 
-	e.list, cmd = e.list.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return e, tea.Batch(cmds...)
 }
 
 func (e *EndpointsView) View() string {
-	return e.list.View()
+	return lipgloss.JoinHorizontal(lipgloss.Center, e.list.View(), e.requestView.View())
 }
 
 func (e *EndpointsView) OnFocus() {
@@ -135,6 +150,8 @@ func NewEndpointsView(epManager *endpoints.EndpointsManager, order int) *Endpoin
 	config.Source = "endpoints"
 
 	view.list = optionsProvider.NewOptionsProvider(config)
+	view.requestView = NewRequestView()
+	view.focused = listView
 
 	return view
 }
