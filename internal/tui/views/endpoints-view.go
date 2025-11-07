@@ -37,7 +37,7 @@ func (e *EndpointsView) Help() []key.Binding {
 }
 
 func (e *EndpointsView) GetFooterSegment() string {
-	return fmt.Sprintf("%s/", e.collection.Name)
+	return fmt.Sprintf("%s/%s", e.collection.Name, e.list.GetSelected().Name)
 }
 
 func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {

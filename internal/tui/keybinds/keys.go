@@ -36,12 +36,12 @@ var Keys = Keymaps{
 		key.WithHelp("↓/j", "down"),
 	),
 	PrevPage: key.NewBinding(
-		key.WithKeys("left", "h", "pgup"),
-		key.WithHelp("←/h/pgup", "prev page"),
+		key.WithKeys("left", "h"),
+		key.WithHelp("←/h", "prev page"),
 	),
 	NextPage: key.NewBinding(
 		key.WithKeys("right", "l", "pgdown"),
-		key.WithHelp("→/l/pgdn", "next page"),
+		key.WithHelp("→/l", "next page"),
 	),
 	Filter: key.NewBinding(
 		key.WithKeys("/"),
@@ -61,11 +61,11 @@ var Keys = Keymaps{
 	),
 	InsertItem: key.NewBinding(
 		key.WithKeys("a"),
-		key.WithHelp("a", "add item"),
+		key.WithHelp("a", "add"),
 	),
 	EditItem: key.NewBinding(
 		key.WithKeys("e"),
-		key.WithHelp("e", "edit item"),
+		key.WithHelp("e", "edit"),
 	),
 	Choose: key.NewBinding(
 		key.WithKeys("enter"),
