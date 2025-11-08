@@ -24,18 +24,22 @@ type MethodOption struct {
 func (m MethodOption) Title() string       { return m.Name }
 func (m MethodOption) Description() string { return m.Name }
 func (m MethodOption) Value() string       { return m.Type }
-func (m MethodOption) FilterValue() string { return "" }
+func (m MethodOption) FilterValue() string { return m.Name }
 
 func (m MethodPicker[T]) Init() tea.Cmd {
 	return nil
 }
 
 func (m MethodPicker[T]) Update(msg tea.Msg) (MethodPicker[T], tea.Cmd) {
-	return m, nil
+	var cmd tea.Cmd
+
+	m.list, cmd = m.list.Update(msg)
+
+	return m, cmd
 }
 
 func (m MethodPicker[T]) View() string {
-	return "hello"
+	return m.list.View()
 }
 
 func (m *MethodPicker[T]) OnFocus() {
@@ -59,7 +63,23 @@ func (m *MethodPicker[T]) Help() []key.Binding {
 	}
 }
 
-func NewMethodPicker[T any]() MethodPicker[T] {
+func NewMethodPicker[T any](config MethodPickerConfig[T]) MethodPicker[T] {
+	method := MethodPicker[T]{}
 
-	return MethodPicker[T]{}
+	picker := list.New(
+		config.ItemMapper(config.Items),
+		config.Delegate,
+		config.Width,
+		config.Height,
+	)
+
+	picker.SetFilteringEnabled(config.FilteringEnabled)
+	picker.SetShowStatusBar(config.ShowStatusBar)
+	picker.SetShowPagination(config.ShowPagination)
+	picker.SetShowHelp(config.ShowHelp)
+	picker.SetShowTitle(config.ShowTitle)
+
+	method.list = picker
+
+	return method
 }
