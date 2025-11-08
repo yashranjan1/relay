@@ -5,10 +5,12 @@ import (
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/maniac-en/req/internal/backend/database"
 	methodpicker "github.com/maniac-en/req/internal/tui/components/MethodPicker"
 	"github.com/maniac-en/req/internal/tui/keybinds"
+	"github.com/maniac-en/req/internal/tui/styles"
 )
 
 type RequestView struct {
@@ -39,12 +41,21 @@ func (r RequestView) GetFooterSegment() string {
 
 func (r RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	var cmd tea.Cmd
+	var cmds []tea.Cmd
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		r.height = msg.Height
+		r.width = msg.Width
+	}
 
-	return r, cmd
+	r.methodPicker, cmd = r.methodPicker.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return r, tea.Batch(cmds...)
 }
 
 func (r RequestView) View() string {
-	return r.methodPicker.View()
+	return styles.RequestLayout(10, 100)(r.methodPicker.View())
 }
 
 func (r RequestView) SetState(items ...any) error {
@@ -67,8 +78,39 @@ func (r RequestView) OnBlur() {
 
 }
 
+func methodItemMapper(items []string) []list.Item {
+	listItems := make([]list.Item, len(items))
+	for index, item := range items {
+		listItems[index] = methodpicker.MethodOption{
+			Name: item,
+			Type: item,
+		}
+	}
+	return listItems
+}
+
 func NewRequestView() *RequestView {
+	methods := []string{
+		"GET",
+		"POST",
+		"PUT",
+		"PATCH",
+		"DELETE",
+	}
+
+	config := methodpicker.MethodPickerConfig[string]{
+		Items:            methods,
+		ItemMapper:       methodItemMapper,
+		FilteringEnabled: false,
+		ShowPagination:   false,
+		ShowStatusBar:    false,
+		Delegate:         list.DefaultDelegate{},
+		ShowHelp:         false,
+		ShowTitle:        false,
+		Width:            30,
+		Height:           1,
+	}
 	return &RequestView{
-		methodPicker: methodpicker.NewMethodPicker[string](),
+		methodPicker: methodpicker.NewMethodPicker[string](config),
 	}
 }

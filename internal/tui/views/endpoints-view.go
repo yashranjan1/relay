@@ -70,6 +70,8 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	case messages.DeleteItem:
 		e.manager.Delete(context.Background(), msg.ItemID)
 		e.list.RefreshItems()
+	case messages.ChooseItem[optionsProvider.Option]:
+		e.focused = requestView
 	}
 	switch e.focused {
 	case listView:
@@ -84,7 +86,7 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 }
 
 func (e *EndpointsView) View() string {
-	return lipgloss.JoinHorizontal(lipgloss.Center, e.list.View(), e.requestView.View())
+	return lipgloss.JoinHorizontal(lipgloss.Top, e.list.View(), e.requestView.View())
 }
 
 func (e *EndpointsView) OnFocus() {
