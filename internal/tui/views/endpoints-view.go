@@ -37,7 +37,7 @@ func (e *EndpointsView) Help() []key.Binding {
 }
 
 func (e *EndpointsView) GetFooterSegment() string {
-	return fmt.Sprintf("%s/", e.collection.Name)
+	return fmt.Sprintf("%s/%s", e.collection.Name, e.list.GetSelected().Name)
 }
 
 func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
@@ -123,7 +123,7 @@ func NewEndpointsView(epManager *endpoints.EndpointsManager, order int) *Endpoin
 	}
 
 	keybinds := keybinds.NewListKeyMap()
-	config := defaultListConfig[endpoints.EndpointEntity, database.Endpoint](keybinds)
+	config := defaultListConfig[endpoints.EndpointEntity, database.Endpoint](keybinds, createEndpointsDelegate)
 
 	epListFunc := func(ctx context.Context) ([]endpoints.EndpointEntity, error) {
 		return epManager.ListByCollection(ctx, view.collection.ID)
@@ -132,7 +132,7 @@ func NewEndpointsView(epManager *endpoints.EndpointsManager, order int) *Endpoin
 	config.GetItemsFunc = epListFunc
 	config.ItemMapper = itemMapperEp
 	config.AdditionalKeymaps = keybinds
-	config.Source = "collections"
+	config.Source = "endpoints"
 
 	view.list = optionsProvider.NewOptionsProvider(config)
 
