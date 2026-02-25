@@ -12,10 +12,14 @@ import (
 	"github.com/maniac-en/req/internal/tui/styles"
 )
 
-func createEndpointsDelegate() list.ItemDelegate {
+func createEndpointsDelegate(active bool) list.ItemDelegate {
 	d := epItemDelegate{}
 
-	d.SelectedTitleStyle = styles.SelectedListStyle
+	if active {
+		d.SelectedTitleStyle = styles.SelectedActiveListStyle
+	} else {
+		d.SelectedTitleStyle = styles.SelectedInactiveListStyle
+	}
 	d.UnselectedTitleStyle = styles.UnselectedListStyle
 
 	return d

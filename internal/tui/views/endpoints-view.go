@@ -71,7 +71,33 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		e.manager.Delete(context.Background(), msg.ItemID)
 		e.list.RefreshItems()
 	case messages.ChooseItem[optionsProvider.Option]:
+		e.list.OnBlur()
+		e.requestView.OnFocus()
 		e.focused = requestView
+	case messages.NavigateToView:
+		if msg.Target != Endpoints {
+			break
+		}
+		e.requestView.OnBlur()
+		e.focused = listView
+		e.list.OnFocus()
+
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, keybinds.Keys.Back):
+			navMsg := messages.NavigateToView{
+				ViewName: Collections,
+				Target:   MainModel,
+			}
+			switch e.focused {
+			case listView:
+				return e, func() tea.Msg {
+					return navMsg
+				}
+			case requestView:
+				e.requestView, cmd = e.requestView.Update(msg)
+			}
+		}
 	}
 	switch e.focused {
 	case listView:

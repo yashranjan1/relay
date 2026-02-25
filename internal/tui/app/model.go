@@ -67,15 +67,17 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case messages.NavigateToView:
-		a.Views[a.focusedView].OnBlur()
-
 		if msg.Data != nil {
 			err := a.Views[ViewName(msg.ViewName)].SetState(msg.Data)
 			if err != nil {
 				log.Error("failed to set view state during navigation", "target_view", msg.ViewName, "error", err)
 				return a, nil
 			}
+		} else if msg.Target != views.MainModel {
+			break
 		}
+
+		a.Views[a.focusedView].OnBlur()
 
 		a.focusedView = ViewName(msg.ViewName)
 		a.Views[a.focusedView].OnFocus()
@@ -89,15 +91,6 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, keybinds.Keys.Quit):
 			return a, tea.Quit
-		case key.Matches(msg, keybinds.Keys.Back):
-			if a.focusedView == Endpoints {
-				return a, func() tea.Msg {
-					return messages.NavigateToView{
-						ViewName: string(Collections),
-						Data:     nil,
-					}
-				}
-			}
 		}
 	}
 

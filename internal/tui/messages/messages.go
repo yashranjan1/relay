@@ -21,6 +21,7 @@ type DeactivateView struct{}
 
 type NavigateToView struct {
 	ViewName string
+	Target   string
 	Data     interface{}
 }
 

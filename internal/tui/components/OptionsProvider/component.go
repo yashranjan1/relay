@@ -23,6 +23,7 @@ type OptionsProvider[T, U any] struct {
 	list           list.Model
 	input          OptionsInput
 	onSelectAction tea.Msg
+	delegateGenner func(bool) list.ItemDelegate
 	keys           *keybinds.ListKeyMap
 	width          int
 	height         int
@@ -111,10 +112,11 @@ func (o OptionsProvider[T, U]) View() string {
 }
 
 func (o *OptionsProvider[T, U]) OnFocus() {
+	o.list.SetDelegate(o.delegateGenner(true))
 }
 
-func (o OptionsProvider[T, U]) OnBlur() {
-
+func (o *OptionsProvider[T, U]) OnBlur() {
+	o.list.SetDelegate(o.delegateGenner(false))
 }
 
 func (o OptionsProvider[T, U]) GetSelected() Option {
@@ -181,7 +183,7 @@ func initList[T, U any](config *ListConfig[T, U]) list.Model {
 
 	items := config.ItemMapper(rawItems)
 
-	list := list.New(items, config.Delegate, 30, 30)
+	list := list.New(items, config.Delegate(true), 30, 30)
 
 	// list configuration
 	list.SetFilteringEnabled(config.FilteringEnabled)
@@ -216,12 +218,13 @@ func NewOptionsProvider[T, U any](config *ListConfig[T, U]) OptionsProvider[T, U
 	}
 
 	return OptionsProvider[T, U]{
-		list:       initList(config),
-		focused:    listComponent,
-		input:      NewOptionsInput(&inputConfig),
-		getItems:   config.GetItemsFunc,
-		itemMapper: config.ItemMapper,
-		keys:       config.AdditionalKeymaps,
-		source:     config.Source,
+		list:           initList(config),
+		focused:        listComponent,
+		input:          NewOptionsInput(&inputConfig),
+		getItems:       config.GetItemsFunc,
+		itemMapper:     config.ItemMapper,
+		keys:           config.AdditionalKeymaps,
+		source:         config.Source,
+		delegateGenner: config.Delegate,
 	}
 }

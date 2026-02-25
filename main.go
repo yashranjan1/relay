@@ -70,6 +70,7 @@ func initPaths() error {
 	}
 	DBPATH = filepath.Join(APPDIR, "app.db")
 	LOGPATH = filepath.Join(APPDIR, "req.log")
+
 	return nil
 }
 
