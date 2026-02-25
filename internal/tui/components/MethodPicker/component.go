@@ -10,6 +10,7 @@ import (
 type MethodPicker[T any] struct {
 	list           list.Model
 	onSelectAction tea.Msg
+	delegateGenner func(bool) list.ItemDelegate
 	keys           *keybinds.ListKeyMap
 	width          int
 	height         int
@@ -43,10 +44,11 @@ func (m MethodPicker[T]) View() string {
 }
 
 func (m *MethodPicker[T]) OnFocus() {
+	m.list.SetDelegate(m.delegateGenner(true))
 }
 
-func (m MethodPicker[T]) OnBlur() {
-
+func (m *MethodPicker[T]) OnBlur() {
+	m.list.SetDelegate(m.delegateGenner(false))
 }
 
 func (m MethodPicker[T]) GetSelected() MethodOption {
@@ -68,7 +70,7 @@ func NewMethodPicker[T any](config MethodPickerConfig[T]) MethodPicker[T] {
 
 	picker := list.New(
 		config.ItemMapper(config.Items),
-		config.Delegate,
+		config.Delegate(false),
 		config.Width,
 		config.Height,
 	)
@@ -80,6 +82,7 @@ func NewMethodPicker[T any](config MethodPickerConfig[T]) MethodPicker[T] {
 	picker.SetShowTitle(config.ShowTitle)
 
 	method.list = picker
+	method.delegateGenner = config.Delegate
 
 	return method
 }

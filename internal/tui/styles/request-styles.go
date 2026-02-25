@@ -10,3 +10,7 @@ func RequestLayout(height, width int) func(...string) string {
 		BorderLeft(true).
 		Render
 }
+
+var (
+	ActiveRequestItem = lipgloss.NewStyle()
+)
