@@ -7,22 +7,38 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/maniac-en/req/internal/backend/database"
-	"github.com/maniac-en/req/internal/log"
+	componenttypes "github.com/maniac-en/req/internal/tui/components/ComponentTypes"
 	methodpicker "github.com/maniac-en/req/internal/tui/components/MethodPicker"
+	urlinput "github.com/maniac-en/req/internal/tui/components/UrlInput"
 	"github.com/maniac-en/req/internal/tui/keybinds"
 	"github.com/maniac-en/req/internal/tui/messages"
 	"github.com/maniac-en/req/internal/tui/styles"
 )
 
+type reqFocused string
+
+const (
+	methodPicker = "method"
+	urlInput     = "input"
+)
+
+var componentList = []reqFocused{
+	methodPicker,
+	urlInput,
+}
+
 type RequestView struct {
-	width        int
-	height       int
-	help         help.Model
-	keys         *keybinds.ListKeyMap
-	methodPicker methodpicker.MethodPicker[string]
-	order        int
-	endpoint     database.Endpoint
+	width      int
+	focused    reqFocused
+	components map[reqFocused]componenttypes.ComponentInterface
+	index      int
+	height     int
+	help       help.Model
+	keys       *keybinds.ListKeyMap
+	order      int
+	endpoint   database.Endpoint
 }
 
 func (r *RequestView) Init() tea.Cmd {
@@ -34,7 +50,8 @@ func (r *RequestView) Name() string {
 }
 
 func (r *RequestView) Help() []key.Binding {
-	return []key.Binding{}
+	binds := r.components[r.focused].Help()
+	return append(binds, keybinds.Keys.Next)
 }
 
 func (r *RequestView) GetFooterSegment() string {
@@ -48,35 +65,48 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		r.height = msg.Height
 		r.width = msg.Width
+		r.components[urlInput].SetSize(r.width-20, r.height)
 	case tea.KeyMsg:
-		log.Info("received a key")
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
-			log.Info("changing to ep")
 			return r, func() tea.Msg {
 				return messages.NavigateToView{
 					ViewName: Endpoints,
 					Target:   Endpoints,
 				}
 			}
+		case key.Matches(msg, keybinds.Keys.Next):
+			r.index = (r.index + 1) % len(componentList)
+			r.components[r.focused].OnBlur()
+			r.focused = componentList[r.index]
+			r.components[r.focused].OnFocus()
+			return r, nil
 		}
 	}
 
-	r.methodPicker, cmd = r.methodPicker.Update(msg)
+	r.components[r.focused], cmd = r.components[r.focused].Update(msg)
 	cmds = append(cmds, cmd)
 
 	return r, tea.Batch(cmds...)
 }
 
 func (r *RequestView) View() string {
-	return styles.RequestLayout(10, 100)(r.methodPicker.View())
+	views := []string{}
+	for _, val := range componentList {
+		views = append(views, r.components[val].View())
+	}
+	view := lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		views...,
+	)
+	return styles.RequestLayout(r.height, r.width)(view)
 }
 
 func (r *RequestView) SetState(items ...any) error {
 	if len(items) != 1 {
 		return errors.New("Incorrect amount of fields supplied")
 	}
-	r.SetState(items[0])
+	// r.SetState(items[0])
 	return nil
 }
 
@@ -85,11 +115,11 @@ func (r *RequestView) Order() int {
 }
 
 func (r *RequestView) OnFocus() {
-	r.methodPicker.OnFocus()
+	r.components[r.focused].OnFocus()
 }
 
 func (r *RequestView) OnBlur() {
-	r.methodPicker.OnBlur()
+	r.components[r.focused].OnBlur()
 }
 
 func methodItemMapper(items []string) []list.Item {
@@ -104,27 +134,15 @@ func methodItemMapper(items []string) []list.Item {
 }
 
 func NewRequestView() *RequestView {
-	methods := []string{
-		"GET",
-		"POST",
-		"PUT",
-		"PATCH",
-		"DELETE",
-	}
+	mpConfig := createMethodPickerConfig()
 
-	config := methodpicker.MethodPickerConfig[string]{
-		Items:            methods,
-		ItemMapper:       methodItemMapper,
-		FilteringEnabled: false,
-		ShowPagination:   false,
-		ShowStatusBar:    false,
-		Delegate:         createRequestDelegate,
-		ShowHelp:         false,
-		ShowTitle:        false,
-		Width:            30,
-		Height:           1,
-	}
+	uiConfig := createURLInputConfig()
+
 	return &RequestView{
-		methodPicker: methodpicker.NewMethodPicker[string](config),
+		components: map[reqFocused]componenttypes.ComponentInterface{
+			methodPicker: methodpicker.NewMethodPicker(mpConfig),
+			urlInput:     urlinput.NewUrlInput(uiConfig),
+		},
+		focused: methodPicker,
 	}
 }

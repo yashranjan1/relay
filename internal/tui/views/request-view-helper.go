@@ -9,6 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	methodpicker "github.com/maniac-en/req/internal/tui/components/MethodPicker"
+	urlinput "github.com/maniac-en/req/internal/tui/components/UrlInput"
+	"github.com/maniac-en/req/internal/tui/keybinds"
 	"github.com/maniac-en/req/internal/tui/styles"
 )
 
@@ -16,11 +18,11 @@ func createRequestDelegate(active bool) list.ItemDelegate {
 	d := requestDelegate{}
 
 	if active {
-		d.SelectedTitleStyle = styles.SelectedActiveListStyle
+		d.SelectedTitleStyle = styles.ActiveRequestItem
 	} else {
-		d.SelectedTitleStyle = styles.SelectedInactiveListStyle
+		d.SelectedTitleStyle = styles.InactiveRequestItem
 	}
-	d.UnselectedTitleStyle = styles.UnselectedListStyle
+	d.UnselectedTitleStyle = styles.InactiveRequestItem
 
 	return d
 }
@@ -50,4 +52,38 @@ func (r requestDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 	}
 
 	fmt.Fprint(w, fn(str))
+}
+
+func createMethodPickerConfig() methodpicker.MethodPickerConfig[string] {
+	methods := []string{
+		"GET",
+		"POST",
+		"PUT",
+		"PATCH",
+		"DELETE",
+	}
+
+	keys := keybinds.NewListKeyMap()
+
+	return methodpicker.MethodPickerConfig[string]{
+		Items:            methods,
+		ItemMapper:       methodItemMapper,
+		FilteringEnabled: false,
+		ShowPagination:   false,
+		ShowStatusBar:    false,
+		KeyMap:           keys,
+		Delegate:         createRequestDelegate,
+		ShowHelp:         false,
+		ShowTitle:        false,
+		Width:            30,
+		Height:           1,
+	}
+}
+
+func createURLInputConfig() urlinput.UrlInputConfig {
+	return urlinput.UrlInputConfig{
+		Width:       50,
+		Height:      1,
+		StyleGenner: styles.UrlInputStyle,
+	}
 }
