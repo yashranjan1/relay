@@ -143,6 +143,10 @@ func (o *OptionsProvider[T, U]) RefreshItems() {
 	o.list.SetItems(o.itemMapper(newItems))
 }
 
+func (o *OptionsProvider[T, U]) GetSize() (int, int) {
+	return o.width, o.height
+}
+
 func (o *OptionsProvider[T, U]) Help() []key.Binding {
 	var binds []key.Binding
 	switch o.focused {

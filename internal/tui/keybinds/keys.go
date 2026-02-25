@@ -14,6 +14,7 @@ type Keymaps struct {
 	Up                   key.Binding
 	Down                 key.Binding
 	NextPage             key.Binding
+	Next                 key.Binding
 	PrevPage             key.Binding
 	Filter               key.Binding
 	ClearFilter          key.Binding
@@ -30,6 +31,10 @@ var Keys = Keymaps{
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
 		key.WithHelp("↑/k", "back"),
+	),
+	Next: key.NewBinding(
+		key.WithKeys("tab"),
+		key.WithHelp("tab", "next field"),
 	),
 	Down: key.NewBinding(
 		key.WithKeys("down", "j"),

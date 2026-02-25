@@ -43,7 +43,11 @@ func (e *EndpointsView) Name() string {
 }
 
 func (e *EndpointsView) Help() []key.Binding {
-	return e.list.Help()
+	if e.focused == listView {
+		return e.list.Help()
+	} else {
+		return e.requestView.Help()
+	}
 }
 
 func (e *EndpointsView) GetFooterSegment() string {
@@ -58,6 +62,11 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		e.height = msg.Height
 		e.width = msg.Width
 		e.list, cmd = e.list.Update(msg)
+		w, _ := e.list.GetSize()
+		e.requestView, cmd = e.requestView.Update(tea.WindowSizeMsg{
+			Height: msg.Height,
+			Width:  msg.Width - w,
+		})
 		cmds = append(cmds, cmd)
 	case messages.ItemAdded:
 		e.manager.CreateEndpoint(context.Background(), endpoints.EndpointData{

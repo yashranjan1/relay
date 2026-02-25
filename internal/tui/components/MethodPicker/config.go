@@ -12,7 +12,7 @@ type MethodPickerConfig[T any] struct {
 	FilteringEnabled bool
 
 	Delegate          func(bool) list.ItemDelegate
-	KeyMap            list.KeyMap
+	KeyMap            *keybinds.ListKeyMap
 	AdditionalKeymaps *keybinds.ListKeyMap
 
 	OnSelectAction tea.Msg
