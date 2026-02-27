@@ -1,6 +1,7 @@
 package views
 
 import (
+	"context"
 	"errors"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -8,7 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/maniac-en/req/internal/backend/database"
+	"github.com/maniac-en/req/internal/backend/endpoints"
 	componenttypes "github.com/maniac-en/req/internal/tui/components/ComponentTypes"
 	methodpicker "github.com/maniac-en/req/internal/tui/components/MethodPicker"
 	urlinput "github.com/maniac-en/req/internal/tui/components/UrlInput"
@@ -32,13 +33,14 @@ var componentList = []reqFocused{
 type RequestView struct {
 	width      int
 	focused    reqFocused
-	components map[reqFocused]componenttypes.ComponentInterface
+	components map[reqFocused]componenttypes.ReqViewComponent
 	index      int
 	height     int
 	help       help.Model
 	keys       *keybinds.ListKeyMap
 	order      int
-	endpoint   database.Endpoint
+	update     func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error)
+	endpoint   endpoints.EndpointEntity
 }
 
 func (r *RequestView) Init() tea.Cmd {
@@ -65,7 +67,8 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		r.height = msg.Height
 		r.width = msg.Width
-		r.components[urlInput].SetSize(r.width-20, r.height)
+		w := r.components[urlInput].GetWidth()
+		r.components[urlInput].SetWidth(r.width - (w + 30))
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
@@ -76,11 +79,15 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 				}
 			}
 		case key.Matches(msg, keybinds.Keys.Next):
-			r.index = (r.index + 1) % len(componentList)
-			r.components[r.focused].OnBlur()
-			r.focused = componentList[r.index]
-			r.components[r.focused].OnFocus()
-			return r, nil
+			r.shift(true)
+			return r, func() tea.Msg {
+				return messages.RefreshItemsList{}
+			}
+		case key.Matches(msg, keybinds.Keys.Prev):
+			r.shift(false)
+			return r, func() tea.Msg {
+				return messages.RefreshItemsList{}
+			}
 		}
 	}
 
@@ -88,6 +95,26 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	return r, tea.Batch(cmds...)
+}
+
+func (r *RequestView) shift(next bool) {
+	if next {
+		r.index = (r.index + 1) % len(componentList)
+	} else {
+		r.index = (r.index - 1) % len(componentList)
+	}
+	r.endpoint = r.components[r.focused].UpdateState(r.endpoint)
+	r.components[r.focused].OnBlur()
+	r.focused = componentList[r.index]
+	r.components[r.focused].OnFocus()
+	r.update(
+		context.Background(),
+		r.endpoint.GetID(),
+		endpoints.EndpointData{
+			Name:   r.endpoint.Name,
+			Method: r.endpoint.Method,
+			URL:    r.endpoint.Url,
+		})
 }
 
 func (r *RequestView) View() string {
@@ -103,11 +130,16 @@ func (r *RequestView) View() string {
 }
 
 func (r *RequestView) SetState(items ...any) error {
-	if len(items) != 1 {
-		return errors.New("Incorrect amount of fields supplied")
+	if len(items) == 1 {
+		if ep, ok := items[0].(endpoints.EndpointEntity); ok {
+			r.endpoint = ep
+			for _, val := range componentList {
+				r.components[val].SetState(ep)
+			}
+			return nil
+		}
 	}
-	// r.SetState(items[0])
-	return nil
+	return errors.New("Invalid inputs, this function takes 1 input of type endpoints.Entity")
 }
 
 func (r *RequestView) Order() int {
@@ -133,16 +165,17 @@ func methodItemMapper(items []string) []list.Item {
 	return listItems
 }
 
-func NewRequestView() *RequestView {
+func NewRequestView(update func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error)) *RequestView {
 	mpConfig := createMethodPickerConfig()
 
 	uiConfig := createURLInputConfig()
 
 	return &RequestView{
-		components: map[reqFocused]componenttypes.ComponentInterface{
+		components: map[reqFocused]componenttypes.ReqViewComponent{
 			methodPicker: methodpicker.NewMethodPicker(mpConfig),
 			urlInput:     urlinput.NewUrlInput(uiConfig),
 		},
 		focused: methodPicker,
+		update:  update,
 	}
 }

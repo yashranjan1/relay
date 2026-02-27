@@ -12,6 +12,7 @@ import (
 
 type ListConfig[T, U any] struct {
 	OnSelectAction tea.Msg
+	OnChangeAction func(int64)
 
 	ShowPagination bool
 	ShowStatusBar  bool

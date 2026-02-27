@@ -62,7 +62,7 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		e.height = msg.Height
 		e.width = msg.Width
 		e.list, cmd = e.list.Update(msg)
-		w, _ := e.list.GetSize()
+		_, w := e.list.GetSize()
 		e.requestView, cmd = e.requestView.Update(tea.WindowSizeMsg{
 			Height: msg.Height,
 			Width:  msg.Width - w,
@@ -74,6 +74,8 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 			Name:         msg.Item,
 			Method:       "GET",
 		})
+	case messages.RefreshItemsList:
+		e.list.RefreshItems()
 	case messages.ItemEdited:
 		e.manager.UpdateEndpointName(context.Background(), msg.ItemID, msg.Item)
 	case messages.DeleteItem:
@@ -129,6 +131,7 @@ func (e *EndpointsView) OnFocus() {
 }
 
 func (e *EndpointsView) SetState(items ...any) error {
+	// TODO: Something over here should also set the state for the request view
 	if len(items) == 1 {
 		if collection, ok := items[0].(optionsProvider.Option); ok {
 			e.collection = collection
@@ -177,6 +180,17 @@ func NewEndpointsView(epManager *endpoints.EndpointsManager, order int) *Endpoin
 	keybinds := keybinds.NewListKeyMap()
 	config := defaultListConfig[endpoints.EndpointEntity, database.Endpoint](keybinds, createEndpointsDelegate)
 
+	epUpdateFunc := epManager.UpdateEndpoint
+	view.requestView = NewRequestView(epUpdateFunc)
+
+	config.OnChangeAction = func(id int64) {
+		epDetails, err := epManager.Read(context.Background(), id)
+		if err != nil {
+			// TODO: what do we do here? prob throw a crash ig?
+		}
+		view.requestView.SetState(epDetails)
+	}
+
 	epListFunc := func(ctx context.Context) ([]endpoints.EndpointEntity, error) {
 		return epManager.ListByCollection(ctx, view.collection.ID)
 	}
@@ -187,7 +201,6 @@ func NewEndpointsView(epManager *endpoints.EndpointsManager, order int) *Endpoin
 	config.Source = "endpoints"
 
 	view.list = optionsProvider.NewOptionsProvider(config)
-	view.requestView = NewRequestView()
 	view.focused = listView
 
 	return view

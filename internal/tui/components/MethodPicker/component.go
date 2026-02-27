@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/maniac-en/req/internal/backend/endpoints"
 	componenttypes "github.com/maniac-en/req/internal/tui/components/ComponentTypes"
 	"github.com/maniac-en/req/internal/tui/keybinds"
 )
@@ -13,6 +14,7 @@ type MethodPicker[T any] struct {
 	onSelectAction tea.Msg
 	delegateGenner func(bool) list.ItemDelegate
 	keys           *keybinds.ListKeyMap
+	state          endpoints.EndpointEntity
 	width          int
 	height         int
 	itemMapper     func([]T) []list.Item
@@ -32,10 +34,37 @@ func (m *MethodPicker[T]) Init() tea.Cmd {
 	return nil
 }
 
-func (m *MethodPicker[T]) SetSize(width, height int) {
+func (m *MethodPicker[T]) SetWidth(width int) {
+	m.list.SetWidth(width)
 }
 
-func (m *MethodPicker[T]) Update(msg tea.Msg) (componenttypes.ComponentInterface, tea.Cmd) {
+func (m *MethodPicker[T]) GetWidth() int {
+	return m.list.Width()
+}
+
+func (m *MethodPicker[T]) SetState(ep endpoints.EndpointEntity) {
+	if index := m.findIndex(ep.Method); index >= 0 {
+		m.list.Select(index)
+		m.state = ep
+	}
+}
+
+func (m *MethodPicker[T]) UpdateState(ep endpoints.EndpointEntity) endpoints.EndpointEntity {
+	ep.Method = m.list.SelectedItem().(MethodOption).Name
+	return ep
+}
+
+func (m *MethodPicker[T]) findIndex(method string) int {
+	items := m.list.Items()
+	for index, item := range items {
+		if option, ok := item.(MethodOption); ok && option.Name == method {
+			return index
+		}
+	}
+	return -1
+}
+
+func (m *MethodPicker[T]) Update(msg tea.Msg) (componenttypes.ReqViewComponent, tea.Cmd) {
 	var cmd tea.Cmd
 
 	m.list, cmd = m.list.Update(msg)

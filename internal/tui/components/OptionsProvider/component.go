@@ -23,6 +23,7 @@ type OptionsProvider[T, U any] struct {
 	list           list.Model
 	input          OptionsInput
 	onSelectAction tea.Msg
+	onChangeAction func(int64)
 	delegateGenner func(bool) list.ItemDelegate
 	keys           *keybinds.ListKeyMap
 	width          int
@@ -44,7 +45,7 @@ func (o Option) Description() string { return o.Subtext }
 func (o Option) Value() int64        { return o.ID }
 func (o Option) FilterValue() string { return o.Name }
 
-func (o OptionsProvider[T, U]) Init() tea.Cmd {
+func (o *OptionsProvider[T, U]) Init() tea.Cmd {
 	return nil
 }
 
@@ -96,7 +97,12 @@ func (o OptionsProvider[T, U]) Update(msg tea.Msg) (OptionsProvider[T, U], tea.C
 	}
 	switch o.focused {
 	case listComponent:
+		index := o.list.Index()
 		o.list, cmd = o.list.Update(msg)
+		newIndex := o.list.Index()
+		if newIndex != index && o.onChangeAction != nil {
+			o.onChangeAction(o.GetSelected().ID)
+		}
 	case textComponent:
 		o.input, cmd = o.input.Update(msg)
 	}
@@ -207,6 +213,10 @@ func (o *OptionsProvider[T, U]) SetGetItemsFunc(getItems func(context.Context) (
 		log.Error("error fetching items")
 	}
 	o.list.SetItems(o.itemMapper(items))
+	if o.onChangeAction != nil {
+		o.onChangeAction(o.itemMapper(items)[0].(Option).ID)
+	}
+
 }
 
 func NewOptionsProvider[T, U any](config *ListConfig[T, U]) OptionsProvider[T, U] {
@@ -230,5 +240,7 @@ func NewOptionsProvider[T, U any](config *ListConfig[T, U]) OptionsProvider[T, U
 		keys:           config.AdditionalKeymaps,
 		source:         config.Source,
 		delegateGenner: config.Delegate,
+		onChangeAction: config.OnChangeAction,
 	}
+
 }
