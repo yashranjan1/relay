@@ -14,8 +14,10 @@ type Keymaps struct {
 	Up                   key.Binding
 	Down                 key.Binding
 	NextPage             key.Binding
+	SendRequest          key.Binding
 	Next                 key.Binding
 	Prev                 key.Binding
+	Save                 key.Binding
 	PrevPage             key.Binding
 	Filter               key.Binding
 	ClearFilter          key.Binding
@@ -27,11 +29,19 @@ type Keymaps struct {
 var Keys = Keymaps{
 	Back: key.NewBinding(
 		key.WithKeys("ctrl+b"),
-		key.WithHelp("esc", "back"),
+		key.WithHelp("ctrl+b", "back"),
+	),
+	SendRequest: key.NewBinding(
+		key.WithKeys("ctrl+r"),
+		key.WithHelp("ctrl+r", "send request"),
+	),
+	Save: key.NewBinding(
+		key.WithKeys("ctrl+s"),
+		key.WithHelp("ctrl+s", "save"),
 	),
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
-		key.WithHelp("↑/k", "back"),
+		key.WithHelp("↑/k", "up"),
 	),
 	Prev: key.NewBinding(
 		key.WithKeys("ctrl+h"),

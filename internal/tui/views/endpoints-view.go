@@ -107,6 +107,7 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 				}
 			case requestView:
 				e.requestView, cmd = e.requestView.Update(msg)
+				return e, nil
 			}
 		}
 	}

@@ -3,13 +3,17 @@ package views
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/maniac-en/req/internal/backend/endpoints"
+	"github.com/maniac-en/req/internal/backend/http"
+	"github.com/maniac-en/req/internal/log"
 	componenttypes "github.com/maniac-en/req/internal/tui/components/ComponentTypes"
 	methodpicker "github.com/maniac-en/req/internal/tui/components/MethodPicker"
 	urlinput "github.com/maniac-en/req/internal/tui/components/UrlInput"
@@ -31,16 +35,21 @@ var componentList = []reqFocused{
 }
 
 type RequestView struct {
-	width      int
-	focused    reqFocused
-	components map[reqFocused]componenttypes.ReqViewComponent
-	index      int
-	height     int
-	help       help.Model
-	keys       *keybinds.ListKeyMap
-	order      int
-	update     func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error)
-	endpoint   endpoints.EndpointEntity
+	width        int
+	focused      reqFocused
+	components   map[reqFocused]componenttypes.ReqViewComponent
+	index        int
+	height       int
+	loading      bool
+	help         help.Model
+	keys         *keybinds.ListKeyMap
+	spinner      spinner.Model
+	responsePage bool
+	client       *http.HTTPManager
+	order        int
+	res          *http.Response
+	update       func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error)
+	endpoint     endpoints.EndpointEntity
 }
 
 func (r *RequestView) Init() tea.Cmd {
@@ -53,7 +62,13 @@ func (r *RequestView) Name() string {
 
 func (r *RequestView) Help() []key.Binding {
 	binds := r.components[r.focused].Help()
-	return append(binds, keybinds.Keys.Next)
+	reqViewBinds := []key.Binding{
+		keybinds.Keys.Prev,
+		keybinds.Keys.Next,
+		keybinds.Keys.Save,
+		keybinds.Keys.SendRequest,
+	}
+	return append(binds, reqViewBinds...)
 }
 
 func (r *RequestView) GetFooterSegment() string {
@@ -72,10 +87,15 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
-			return r, func() tea.Msg {
-				return messages.NavigateToView{
-					ViewName: Endpoints,
-					Target:   Endpoints,
+			if r.responsePage {
+				r.responsePage = false
+				return r, nil
+			} else {
+				return r, func() tea.Msg {
+					return messages.NavigateToView{
+						ViewName: Endpoints,
+						Target:   Endpoints,
+					}
 				}
 			}
 		case key.Matches(msg, keybinds.Keys.Next):
@@ -88,11 +108,46 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 			return r, func() tea.Msg {
 				return messages.RefreshItemsList{}
 			}
+		case key.Matches(msg, keybinds.Keys.SendRequest):
+			request := &http.Request{
+				Method: r.endpoint.Method,
+				URL:    r.endpoint.Url,
+			}
+			r.responsePage = true
+			r.loading = true
+			res, err := r.client.ExecuteRequest(request)
+			r.loading = false
+			r.res = res
+			if err != nil {
+				log.Warn("error occurred while trying to send a request", err)
+			}
+			return r, r.spinner.Tick
+		case key.Matches(msg, keybinds.Keys.Save):
+			for _, val := range r.components {
+				r.endpoint = val.UpdateState(r.endpoint)
+			}
+			r.update(
+				context.Background(),
+				r.endpoint.GetID(),
+				endpoints.EndpointData{
+					Name:   r.endpoint.Name,
+					Method: r.endpoint.Method,
+					URL:    r.endpoint.Url,
+				})
 		}
 	}
 
-	r.components[r.focused], cmd = r.components[r.focused].Update(msg)
+	if !r.responsePage {
+		r.components[r.focused], cmd = r.components[r.focused].Update(msg)
+	}
+
 	cmds = append(cmds, cmd)
+
+	if r.loading {
+		log.Info("working")
+		r.spinner, cmd = r.spinner.Update(msg)
+		cmds = append(cmds, cmd)
+	}
 
 	return r, tea.Batch(cmds...)
 }
@@ -118,15 +173,37 @@ func (r *RequestView) shift(next bool) {
 }
 
 func (r *RequestView) View() string {
-	views := []string{}
-	for _, val := range componentList {
-		views = append(views, r.components[val].View())
+	if r.responsePage {
+		if r.res == nil {
+			return styles.RequestLayout(r.height, r.width)(lipgloss.Place(r.width, r.height-1, lipgloss.Center, lipgloss.Center, "No responses so far"))
+		}
+		if r.loading {
+			loadingString := fmt.Sprintf("%s Loading...", r.spinner.View())
+			return styles.RequestLayout(r.height, r.width)(lipgloss.Place(r.width, r.height-1, lipgloss.Center, lipgloss.Center, loadingString))
+		}
+		// TODO: use a viewport here PLEASE => https://github.com/charmbracelet/bubbles?tab=readme-ov-file#viewport
+		responseDetails := []string{
+			fmt.Sprintf("Status Code: %d", r.res.StatusCode),
+			fmt.Sprintf("Body: %s", r.res.Body),
+		}
+		for key, val := range r.res.Headers {
+			for _, item := range val {
+				responseDetails = append(responseDetails, fmt.Sprintf("%s: %s", key, item))
+			}
+		}
+		view := styles.ResponseStyle(r.height, r.width)(lipgloss.JoinVertical(lipgloss.Top, responseDetails...))
+		return view
+	} else {
+		views := []string{}
+		for _, val := range componentList {
+			views = append(views, r.components[val].View())
+		}
+		view := lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			views...,
+		)
+		return styles.RequestLayout(r.height, r.width)(view)
 	}
-	view := lipgloss.JoinHorizontal(
-		lipgloss.Left,
-		views...,
-	)
-	return styles.RequestLayout(r.height, r.width)(view)
 }
 
 func (r *RequestView) SetState(items ...any) error {
@@ -169,13 +246,18 @@ func NewRequestView(update func(context.Context, int64, endpoints.EndpointData) 
 	mpConfig := createMethodPickerConfig()
 
 	uiConfig := createURLInputConfig()
+	s := spinner.New()
+	s.Spinner = spinner.Dot
 
 	return &RequestView{
 		components: map[reqFocused]componenttypes.ReqViewComponent{
 			methodPicker: methodpicker.NewMethodPicker(mpConfig),
 			urlInput:     urlinput.NewUrlInput(uiConfig),
 		},
-		focused: methodPicker,
-		update:  update,
+		focused:      methodPicker,
+		update:       update,
+		client:       http.NewHTTPManager(),
+		responsePage: false,
+		spinner:      s,
 	}
 }
