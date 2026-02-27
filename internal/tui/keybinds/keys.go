@@ -15,6 +15,7 @@ type Keymaps struct {
 	Down                 key.Binding
 	NextPage             key.Binding
 	Next                 key.Binding
+	Prev                 key.Binding
 	PrevPage             key.Binding
 	Filter               key.Binding
 	ClearFilter          key.Binding
@@ -25,16 +26,20 @@ type Keymaps struct {
 
 var Keys = Keymaps{
 	Back: key.NewBinding(
-		key.WithKeys("esc", "q"),
-		key.WithHelp("esc/q", "back"),
+		key.WithKeys("ctrl+b"),
+		key.WithHelp("esc", "back"),
 	),
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
 		key.WithHelp("↑/k", "back"),
 	),
+	Prev: key.NewBinding(
+		key.WithKeys("ctrl+h"),
+		key.WithHelp("ctrl+h", "prev field"),
+	),
 	Next: key.NewBinding(
-		key.WithKeys("tab"),
-		key.WithHelp("tab", "next field"),
+		key.WithKeys("ctrl+l"),
+		key.WithHelp("ctrl+l", "next field"),
 	),
 	Down: key.NewBinding(
 		key.WithKeys("down", "j"),
