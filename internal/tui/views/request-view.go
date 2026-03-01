@@ -17,6 +17,7 @@ import (
 	componenttypes "github.com/maniac-en/req/internal/tui/components/ComponentTypes"
 	methodpicker "github.com/maniac-en/req/internal/tui/components/MethodPicker"
 	urlinput "github.com/maniac-en/req/internal/tui/components/UrlInput"
+	viewport "github.com/maniac-en/req/internal/tui/components/ViewPort"
 	"github.com/maniac-en/req/internal/tui/keybinds"
 	"github.com/maniac-en/req/internal/tui/messages"
 	"github.com/maniac-en/req/internal/tui/styles"
@@ -37,6 +38,7 @@ var componentList = []reqFocused{
 type RequestView struct {
 	width        int
 	focused      reqFocused
+	viewport     viewport.Viewport
 	components   map[reqFocused]componenttypes.ReqViewComponent
 	index        int
 	height       int
@@ -47,7 +49,6 @@ type RequestView struct {
 	responsePage bool
 	client       *http.HTTPManager
 	order        int
-	res          *http.Response
 	update       func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error)
 	endpoint     endpoints.EndpointEntity
 }
@@ -84,6 +85,10 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		r.width = msg.Width
 		w := r.components[urlInput].GetWidth()
 		r.components[urlInput].SetWidth(r.width - (w + 30))
+		r.viewport, cmd = r.viewport.Update(tea.WindowSizeMsg{
+			Height: msg.Height,
+			Width:  r.width,
+		})
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
@@ -116,10 +121,10 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 			r.loading = true
 			res, err := r.client.ExecuteRequest(request)
 			r.loading = false
-			r.res = res
 			if err != nil {
 				log.Warn("error occurred while trying to send a request", err)
 			}
+			r.viewport.SetState(res)
 			return r, r.spinner.Tick
 		case key.Matches(msg, keybinds.Keys.Save):
 			for _, val := range r.components {
@@ -138,12 +143,13 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 
 	if !r.responsePage {
 		r.components[r.focused], cmd = r.components[r.focused].Update(msg)
+	} else {
+		r.viewport, cmd = r.viewport.Update(msg)
 	}
 
 	cmds = append(cmds, cmd)
 
 	if r.loading {
-		log.Info("working")
 		r.spinner, cmd = r.spinner.Update(msg)
 		cmds = append(cmds, cmd)
 	}
@@ -173,24 +179,11 @@ func (r *RequestView) shift(next bool) {
 
 func (r *RequestView) View() string {
 	if r.responsePage {
-		if r.res == nil {
-			return styles.RequestLayout(r.height, r.width)(lipgloss.Place(r.width, r.height-1, lipgloss.Center, lipgloss.Center, "No responses so far"))
-		}
 		if r.loading {
 			loadingString := fmt.Sprintf("%s Loading...", r.spinner.View())
 			return styles.RequestLayout(r.height, r.width)(lipgloss.Place(r.width, r.height-1, lipgloss.Center, lipgloss.Center, loadingString))
 		}
-		// TODO: use a viewport here PLEASE => https://github.com/charmbracelet/bubbles?tab=readme-ov-file#viewport
-		responseDetails := []string{
-			fmt.Sprintf("Status Code: %d", r.res.StatusCode),
-			fmt.Sprintf("Body: %s", r.res.Body),
-		}
-		for key, val := range r.res.Headers {
-			for _, item := range val {
-				responseDetails = append(responseDetails, fmt.Sprintf("%s: %s", key, item))
-			}
-		}
-		view := styles.ResponseStyle(r.height, r.width)(lipgloss.JoinVertical(lipgloss.Top, responseDetails...))
+		view := styles.ResponseStyle(r.height, r.width)(r.viewport.View())
 		return view
 	} else {
 		views := []string{}
@@ -254,6 +247,7 @@ func NewRequestView(update func(context.Context, int64, endpoints.EndpointData) 
 			urlInput:     urlinput.NewUrlInput(uiConfig),
 		},
 		focused:      methodPicker,
+		viewport:     viewport.NewViewport(),
 		update:       update,
 		client:       http.NewHTTPManager(),
 		responsePage: false,
