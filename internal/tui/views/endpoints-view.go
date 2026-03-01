@@ -96,21 +96,17 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
-			navMsg := messages.NavigateToView{
-				ViewName: Collections,
-				Target:   MainModel,
-			}
-			switch e.focused {
-			case listView:
+			if e.focused == listView {
 				return e, func() tea.Msg {
-					return navMsg
+					return messages.NavigateToView{
+						ViewName: Collections,
+						Target:   MainModel,
+					}
 				}
-			case requestView:
-				e.requestView, cmd = e.requestView.Update(msg)
-				return e, nil
 			}
 		}
 	}
+
 	switch e.focused {
 	case listView:
 		e.list, cmd = e.list.Update(msg)

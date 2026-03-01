@@ -90,12 +90,11 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 			if r.responsePage {
 				r.responsePage = false
 				return r, nil
-			} else {
-				return r, func() tea.Msg {
-					return messages.NavigateToView{
-						ViewName: Endpoints,
-						Target:   Endpoints,
-					}
+			}
+			return r, func() tea.Msg {
+				return messages.NavigateToView{
+					ViewName: Endpoints,
+					Target:   Endpoints,
 				}
 			}
 		case key.Matches(msg, keybinds.Keys.Next):
