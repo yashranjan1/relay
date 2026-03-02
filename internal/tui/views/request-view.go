@@ -69,6 +69,7 @@ func (r *RequestView) Help() []key.Binding {
 		keybinds.Keys.Save,
 		keybinds.Keys.SendRequest,
 	}
+	// FIX: should append responsePage binds when necessary
 	return append(binds, reqViewBinds...)
 }
 
@@ -249,9 +250,10 @@ func NewRequestView(update func(context.Context, int64, endpoints.EndpointData) 
 			methodPicker: methodpicker.NewMethodPicker(mpConfig),
 			urlInput:     urlinput.NewUrlInput(uiConfig),
 		},
-		focused:      methodPicker,
-		viewport:     viewport.NewViewport(),
-		update:       update,
+		focused:  methodPicker,
+		viewport: viewport.NewViewport(),
+		update:   update,
+		// FIX: use app context http manager
 		client:       http.NewHTTPManager(),
 		responsePage: false,
 		spinner:      s,

@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/maniac-en/req/internal/backend/http"
 )
 
@@ -60,7 +61,9 @@ func (v *Viewport) View() string {
 	if !v.ready {
 		return "Waiting.."
 	}
-	return v.viewport.View()
+	// FIX: this mess
+	percentage := int(v.viewport.ScrollPercent() * 100)
+	return lipgloss.JoinVertical(lipgloss.Top, v.viewport.View(), fmt.Sprintf("%d%%", percentage))
 }
 
 func (v *Viewport) OnFocus() {
@@ -70,6 +73,7 @@ func (v *Viewport) OnBlur() {
 }
 
 func (v *Viewport) Help() []key.Binding {
+	// FIX: this
 	return []key.Binding{}
 }
 
