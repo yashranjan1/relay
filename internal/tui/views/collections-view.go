@@ -140,6 +140,7 @@ func NewCollectionsView(collManager *collections.CollectionsManager, endpointsMa
 	}
 	config.AdditionalKeymaps = keybinds
 	config.Source = "collections"
+	config.Placeholder = "Add a new collection..."
 
 	return &CollectionsView{
 		list:             optionsProvider.NewOptionsProvider(config),

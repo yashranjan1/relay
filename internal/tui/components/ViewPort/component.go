@@ -41,7 +41,7 @@ func (v Viewport) Update(msg tea.Msg) (Viewport, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		if !v.ready {
-			v.viewport = viewport.New(msg.Width, msg.Height-10)
+			v.viewport = viewport.New(msg.Width, msg.Height-20)
 			v.ready = true
 		} else {
 			v.viewport.Width = msg.Width

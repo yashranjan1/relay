@@ -186,6 +186,9 @@ func (r *RequestView) View() string {
 		view := styles.ResponseStyle(r.height, r.width)(r.viewport.View())
 		return view
 	} else {
+		if r.endpoint.Name == "" {
+			return styles.RequestLayout(r.height, r.width)("No Endpoint selected")
+		}
 		views := []string{}
 		for _, val := range componentList {
 			views = append(views, r.components[val].View())

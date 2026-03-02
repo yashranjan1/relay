@@ -47,6 +47,10 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
+	case messages.DeleteItem:
+		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
+	case messages.ItemAdded:
+		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
 	case tea.WindowSizeMsg:
 		a.height = msg.Height
 		a.width = msg.Width
@@ -96,6 +100,14 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	a.Views[a.focusedView], cmd = a.Views[a.focusedView].Update(msg)
 	cmds = append(cmds, cmd)
+
+	// additional update for collections list to update when an ep is added
+	switch msg.(type) {
+	case messages.DeleteItem:
+		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
+	case messages.ItemAdded:
+		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
+	}
 
 	return a, tea.Batch(cmds...)
 }
