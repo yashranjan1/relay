@@ -101,6 +101,7 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
 			if e.focused == listView {
+				e.requestView.SetState(endpoints.EndpointEntity{})
 				return e, func() tea.Msg {
 					return messages.NavigateToView{
 						ViewName: Collections,
