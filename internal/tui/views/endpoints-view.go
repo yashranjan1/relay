@@ -69,11 +69,15 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		})
 		cmds = append(cmds, cmd)
 	case messages.ItemAdded:
-		e.manager.CreateEndpoint(context.Background(), endpoints.EndpointData{
+		ep, err := e.manager.CreateEndpoint(context.Background(), endpoints.EndpointData{
 			CollectionID: e.collection.ID,
 			Name:         msg.Item,
 			Method:       "GET",
 		})
+		if err != nil {
+			//TODO: handle this
+		}
+		e.requestView.SetState(ep)
 	case messages.RefreshItemsList:
 		e.list.RefreshItems()
 	case messages.ItemEdited:
@@ -196,6 +200,7 @@ func NewEndpointsView(epManager *endpoints.EndpointsManager, order int) *Endpoin
 	config.ItemMapper = itemMapperEp
 	config.AdditionalKeymaps = keybinds
 	config.Source = "endpoints"
+	config.Placeholder = "Add a new endpoint..."
 
 	view.list = optionsProvider.NewOptionsProvider(config)
 	view.focused = listView

@@ -133,7 +133,17 @@ func (o OptionsProvider[T, U]) GetSelected() Option {
 			Subtext: "",
 		}
 	}
-	return o.list.SelectedItem().(Option)
+
+	item := o.list.SelectedItem()
+
+	if item == nil {
+		return Option{
+			Name:    "No selection",
+			ID:      -1,
+			Subtext: "",
+		}
+	}
+	return item.(Option)
 }
 
 func (o OptionsProvider[T, U]) IsFiltering() bool {
@@ -193,7 +203,7 @@ func initList[T, U any](config *ListConfig[T, U]) list.Model {
 
 	items := config.ItemMapper(rawItems)
 
-	list := list.New(items, config.Delegate(true), 30, 30)
+	list := list.New(items, config.Delegate(true), 100, 30)
 
 	// list configuration
 	list.SetFilteringEnabled(config.FilteringEnabled)
@@ -213,8 +223,8 @@ func (o *OptionsProvider[T, U]) SetGetItemsFunc(getItems func(context.Context) (
 		log.Error("error fetching items")
 	}
 	o.list.SetItems(o.itemMapper(items))
-	if o.onChangeAction != nil {
-		o.onChangeAction(o.itemMapper(items)[0].(Option).ID)
+	if mappedItems := o.itemMapper(items); o.onChangeAction != nil && len(mappedItems) > 0 {
+		o.onChangeAction(mappedItems[0].(Option).ID)
 	}
 
 }
@@ -222,7 +232,7 @@ func (o *OptionsProvider[T, U]) SetGetItemsFunc(getItems func(context.Context) (
 func NewOptionsProvider[T, U any](config *ListConfig[T, U]) OptionsProvider[T, U] {
 	inputConfig := InputConfig{
 		CharLimit:   100,
-		Placeholder: "Add A New Collection...",
+		Placeholder: config.Placeholder,
 		Width:       22,
 		Prompt:      "",
 		KeyMap: InputKeyMaps{

@@ -22,6 +22,7 @@ type ListConfig[T, U any] struct {
 
 	FilteringEnabled bool
 
+	Placeholder       string
 	Delegate          func(bool) list.ItemDelegate
 	KeyMap            list.KeyMap
 	AdditionalKeymaps *keybinds.ListKeyMap
