@@ -12,16 +12,15 @@ import (
 	"runtime/debug"
 
 	tea "github.com/charmbracelet/bubbletea"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/pressly/goose/v3"
 	"github.com/yashranjan1/relay/internal/backend/collections"
 	"github.com/yashranjan1/relay/internal/backend/database"
-	"github.com/yashranjan1/relay/internal/backend/demo"
 	"github.com/yashranjan1/relay/internal/backend/endpoints"
 	"github.com/yashranjan1/relay/internal/backend/history"
 	"github.com/yashranjan1/relay/internal/backend/http"
 	"github.com/yashranjan1/relay/internal/log"
 	"github.com/yashranjan1/relay/internal/tui/app"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/pressly/goose/v3"
 )
 
 // Embed migration files into the binary
@@ -166,15 +165,6 @@ func run() error {
 		historyManager,
 		getVersion(),
 	)
-
-	// populate dummy data for demo
-	demoGenerator := demo.NewDemoGenerator(collectionsManager, endpointsManager)
-	dummyDataCreated, err := demoGenerator.PopulateDummyData(context.Background())
-	if err != nil {
-		log.Error("failed to populate dummy data", "error", err)
-	} else if dummyDataCreated {
-		// appContext.SetDummyDataCreated(true)
-	}
 
 	log.Info("application initialized", "components", []string{"database", "collections", "endpoints", "http", "history", "logging", "demo"})
 	log.Debug("configuration loaded", "collections_manager", collectionsManager != nil, "endpoints", endpointsManager != nil, "database", db != nil, "http_manager", httpManager != nil, "history_manager", historyManager != nil)
