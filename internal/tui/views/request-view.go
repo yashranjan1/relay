@@ -41,6 +41,7 @@ type RequestView struct {
 	viewport     viewport.Viewport
 	components   map[reqFocused]componenttypes.ReqViewComponent
 	index        int
+	epManager    *endpoints.EndpointsManager
 	height       int
 	loading      bool
 	help         help.Model
@@ -210,7 +211,11 @@ func (r *RequestView) View() string {
 
 func (r *RequestView) SetState(items ...any) error {
 	if len(items) == 1 {
-		if ep, ok := items[0].(endpoints.EndpointEntity); ok {
+		if id, ok := items[0].(int64); ok {
+			ep, err := r.epManager.Read(context.Background(), id)
+			if err != nil {
+				// FIX: do something over here
+			}
 			r.endpoint = ep
 			for _, val := range componentList {
 				r.components[val].SetState(ep)
@@ -244,7 +249,7 @@ func methodItemMapper(items []string) []list.Item {
 	return listItems
 }
 
-func NewRequestView(update func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error)) *RequestView {
+func NewRequestView(epManager *endpoints.EndpointsManager, update func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error), order int) *RequestView {
 	mpConfig := createMethodPickerConfig()
 
 	uiConfig := createURLInputConfig()
@@ -256,9 +261,11 @@ func NewRequestView(update func(context.Context, int64, endpoints.EndpointData) 
 			methodPicker: methodpicker.NewMethodPicker(mpConfig),
 			urlInput:     urlinput.NewUrlInput(uiConfig),
 		},
-		focused:  methodPicker,
-		viewport: viewport.NewViewport(),
-		update:   update,
+		epManager: epManager,
+		focused:   methodPicker,
+		viewport:  viewport.NewViewport(),
+		order:     order,
+		update:    update,
 		// FIX: use app context http manager
 		client:       http.NewHTTPManager(),
 		responsePage: false,
