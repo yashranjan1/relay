@@ -62,15 +62,21 @@ func (r *RequestView) Name() string {
 }
 
 func (r *RequestView) Help() []key.Binding {
-	binds := r.components[r.focused].Help()
-	reqViewBinds := []key.Binding{
-		keybinds.Keys.Prev,
-		keybinds.Keys.Next,
-		keybinds.Keys.Save,
-		keybinds.Keys.SendRequest,
+	var reqViewBinds []key.Binding
+	if r.responsePage {
+		reqViewBinds = r.viewport.Help()
+	} else {
+		binds := r.components[r.focused].Help()
+		reqViewBinds = []key.Binding{
+			keybinds.Keys.Prev,
+			keybinds.Keys.Next,
+			keybinds.Keys.Save,
+			keybinds.Keys.SendRequest,
+		}
+		reqViewBinds = append(binds, reqViewBinds...)
 	}
 	// FIX: should append responsePage binds when necessary
-	return append(binds, reqViewBinds...)
+	return reqViewBinds
 }
 
 func (r *RequestView) GetFooterSegment() string {
@@ -88,7 +94,7 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		r.components[urlInput].SetWidth(r.width - (w + 30))
 		r.viewport, cmd = r.viewport.Update(tea.WindowSizeMsg{
 			Height: msg.Height,
-			Width:  r.width,
+			Width:  r.width - 4,
 		})
 	case tea.KeyMsg:
 		switch {
