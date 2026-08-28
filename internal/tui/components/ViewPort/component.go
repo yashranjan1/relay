@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/maniac-en/req/internal/backend/http"
+	"github.com/maniac-en/req/internal/tui/keybinds"
 )
 
 type Viewport struct {
@@ -26,9 +27,9 @@ func (v *Viewport) Init() tea.Cmd {
 func (v *Viewport) SetState(state *http.Response) {
 	var str strings.Builder
 
-	str.WriteString(fmt.Sprintf("Status code: %d\n", state.StatusCode))
-	str.WriteString(fmt.Sprintf("ContentType header: %s\n", state.Headers["Content-Type"]))
-	str.WriteString(fmt.Sprintf("Body: %s\n", state.Body))
+	fmt.Fprintf(&str, "Status code: %d\n", state.StatusCode)
+	fmt.Fprintf(&str, "ContentType header: %s\n", state.Headers["Content-Type"])
+	fmt.Fprintf(&str, "Body: %s\n", state.Body)
 
 	v.state = str.String()
 	v.viewport.SetContent(v.state)
@@ -43,6 +44,8 @@ func (v Viewport) Update(msg tea.Msg) (Viewport, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		if !v.ready {
 			v.viewport = viewport.New(msg.Width, msg.Height-20)
+			v.width = msg.Width
+			v.height = msg.Height
 			v.ready = true
 		} else {
 			v.viewport.Width = msg.Width
@@ -62,8 +65,18 @@ func (v *Viewport) View() string {
 		return "Waiting.."
 	}
 	// FIX: this mess
-	percentage := int(v.viewport.ScrollPercent() * 100)
-	return lipgloss.JoinVertical(lipgloss.Top, v.viewport.View(), fmt.Sprintf("%d%%", percentage))
+	str := fmt.Sprintf(" %d%% ", int(v.viewport.ScrollPercent()*100))
+
+	padding := v.height - v.viewport.Height - 7
+
+	return lipgloss.JoinVertical(lipgloss.Left,
+		v.viewport.View(),
+		lipgloss.NewStyle().
+			Width(v.width).
+			PaddingTop(padding).
+			Align(lipgloss.Right).
+			Render(str),
+	)
 }
 
 func (v *Viewport) OnFocus() {
@@ -74,7 +87,10 @@ func (v *Viewport) OnBlur() {
 
 func (v *Viewport) Help() []key.Binding {
 	// FIX: this
-	return []key.Binding{}
+	return []key.Binding{
+		keybinds.Keys.Down,
+		keybinds.Keys.Up,
+	}
 }
 
 func NewViewport() Viewport {
