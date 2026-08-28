@@ -19,19 +19,17 @@ import (
 type epFocused string
 
 const (
-	listView    = "listview"
-	requestView = "requestview"
+	listView = "listview"
 )
 
 type EndpointsView struct {
-	height      int
-	focused     epFocused
-	collection  optionsProvider.Option
-	width       int
-	order       int
-	list        optionsProvider.OptionsProvider[endpoints.EndpointEntity, database.Endpoint]
-	requestView ViewInterface
-	manager     *endpoints.EndpointsManager
+	height     int
+	focused    epFocused
+	collection optionsProvider.Option
+	width      int
+	order      int
+	list       optionsProvider.OptionsProvider[endpoints.EndpointEntity, database.Endpoint]
+	manager    *endpoints.EndpointsManager
 }
 
 func (e *EndpointsView) Init() tea.Cmd {
@@ -43,11 +41,7 @@ func (e *EndpointsView) Name() string {
 }
 
 func (e *EndpointsView) Help() []key.Binding {
-	if e.focused == listView {
-		return e.list.Help()
-	} else {
-		return e.requestView.Help()
-	}
+	return e.list.Help()
 }
 
 func (e *EndpointsView) GetFooterSegment() string {
@@ -62,14 +56,9 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		e.height = msg.Height
 		e.width = msg.Width
 		e.list, cmd = e.list.Update(msg)
-		_, w := e.list.GetSize()
-		e.requestView, cmd = e.requestView.Update(tea.WindowSizeMsg{
-			Height: msg.Height,
-			Width:  msg.Width - w,
-		})
 		cmds = append(cmds, cmd)
 	case messages.ItemAdded:
-		ep, err := e.manager.CreateEndpoint(context.Background(), endpoints.EndpointData{
+		_, err := e.manager.CreateEndpoint(context.Background(), endpoints.EndpointData{
 			CollectionID: e.collection.ID,
 			Name:         msg.Item,
 			Method:       "GET",
@@ -77,7 +66,6 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		if err != nil {
 			//TODO: handle this
 		}
-		e.requestView.SetState(ep)
 	case messages.RefreshItemsList:
 		e.list.RefreshItems()
 	case messages.ItemEdited:
@@ -87,13 +75,19 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		e.list.RefreshItems()
 	case messages.ChooseItem[optionsProvider.Option]:
 		e.list.OnBlur()
-		e.requestView.OnFocus()
-		e.focused = requestView
+		return e, func() tea.Msg {
+			return messages.NavigateToView{
+				ViewName: "request",
+				Target:   MainModel,
+				Data:     msg.Item.ID,
+			}
+		}
 	case messages.NavigateToView:
 		if msg.Target != Endpoints {
 			break
 		}
-		e.requestView.OnBlur()
+		// FIX: idek
+		// e.requestView.OnBlur()
 		e.focused = listView
 		e.list.OnFocus()
 
@@ -101,7 +95,7 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
 			if e.focused == listView {
-				e.requestView.SetState(endpoints.EndpointEntity{})
+				// e.requestView.SetState(endpoints.EndpointEntity{})
 				return e, func() tea.Msg {
 					return messages.NavigateToView{
 						ViewName: Collections,
@@ -115,8 +109,6 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	switch e.focused {
 	case listView:
 		e.list, cmd = e.list.Update(msg)
-	case requestView:
-		e.requestView, cmd = e.requestView.Update(msg)
 	}
 
 	cmds = append(cmds, cmd)
@@ -125,7 +117,7 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 }
 
 func (e *EndpointsView) View() string {
-	return lipgloss.JoinHorizontal(lipgloss.Top, e.list.View(), e.requestView.View())
+	return e.list.View()
 }
 
 func (e *EndpointsView) OnFocus() {
@@ -181,17 +173,6 @@ func NewEndpointsView(epManager *endpoints.EndpointsManager, order int) *Endpoin
 
 	keybinds := keybinds.NewListKeyMap()
 	config := defaultListConfig[endpoints.EndpointEntity, database.Endpoint](keybinds, createEndpointsDelegate)
-
-	epUpdateFunc := epManager.UpdateEndpoint
-	view.requestView = NewRequestView(epUpdateFunc)
-
-	config.OnChangeAction = func(id int64) {
-		epDetails, err := epManager.Read(context.Background(), id)
-		if err != nil {
-			// TODO: what do we do here? prob throw a crash ig?
-		}
-		view.requestView.SetState(epDetails)
-	}
 
 	epListFunc := func(ctx context.Context) ([]endpoints.EndpointEntity, error) {
 		return epManager.ListByCollection(ctx, view.collection.ID)

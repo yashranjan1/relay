@@ -21,6 +21,7 @@ type ViewName string
 const (
 	Collections ViewName = "collections"
 	Endpoints   ViewName = "endpoints"
+	Request     ViewName = "request"
 )
 
 type Heading struct {
@@ -86,6 +87,7 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.focusedView = ViewName(msg.ViewName)
 		a.Views[a.focusedView].OnFocus()
 		return a, nil
+
 	case messages.ShowError:
 		log.Error("user operation failed", "error", msg.Message)
 		a.errorMsg = msg.Message
@@ -196,9 +198,13 @@ func NewAppModel(ctx *Context) AppModel {
 		help:        help.New(),
 		keys:        appKeybinds,
 	}
+
+	epUpdateFunc := model.ctx.Endpoints.UpdateEndpoint
+
 	model.Views = map[ViewName]views.ViewInterface{
 		Collections: views.NewCollectionsView(model.ctx.Collections, model.ctx.Endpoints, 1),
 		Endpoints:   views.NewEndpointsView(model.ctx.Endpoints, 2),
+		Request:     views.NewRequestView(model.ctx.Endpoints, epUpdateFunc, 3),
 	}
 	return model
 }
