@@ -55,11 +55,10 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		a.height = msg.Height
 		a.width = msg.Width
-		for key, _ := range a.Views {
+		for key := range a.Views {
 			a.Views[key], cmd = a.Views[key].Update(tea.WindowSizeMsg{Height: a.AvailableHeight(), Width: msg.Width})
 			cmds = append(cmds, cmd)
 		}
-		cmds = append(cmds, cmd)
 		return a, tea.Batch(cmds...)
 	case messages.ChooseItem[optionsProvider.Option]:
 		switch msg.Source {
@@ -102,14 +101,6 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	a.Views[a.focusedView], cmd = a.Views[a.focusedView].Update(msg)
 	cmds = append(cmds, cmd)
-
-	// additional update for collections list to update when an ep is added
-	switch msg.(type) {
-	case messages.DeleteItem:
-		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
-	case messages.ItemAdded:
-		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
-	}
 
 	return a, tea.Batch(cmds...)
 }
@@ -201,10 +192,17 @@ func NewAppModel(ctx *Context) AppModel {
 
 	epUpdateFunc := model.ctx.Endpoints.UpdateEndpoint
 
+	reqCfg := views.RequestViewConfig{
+		EpManager: model.ctx.Endpoints,
+		Update:    epUpdateFunc,
+		Order:     3,
+		Client:    model.ctx.HTTP,
+	}
+
 	model.Views = map[ViewName]views.ViewInterface{
 		Collections: views.NewCollectionsView(model.ctx.Collections, model.ctx.Endpoints, 1),
 		Endpoints:   views.NewEndpointsView(model.ctx.Endpoints, 2),
-		Request:     views.NewRequestView(model.ctx.Endpoints, epUpdateFunc, 3),
+		Request:     views.NewRequestView(reqCfg),
 	}
 	return model
 }

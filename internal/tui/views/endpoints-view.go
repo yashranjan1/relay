@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/maniac-en/req/internal/backend/database"
 	"github.com/maniac-en/req/internal/backend/endpoints"
 	optionsProvider "github.com/maniac-en/req/internal/tui/components/OptionsProvider"

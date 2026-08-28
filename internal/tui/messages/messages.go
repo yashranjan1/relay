@@ -1,5 +1,7 @@
 package messages
 
+import "github.com/maniac-en/req/internal/backend/http"
+
 type ItemAdded struct {
 	Item string
 }
@@ -23,6 +25,11 @@ type NavigateToView struct {
 	ViewName string
 	Target   string
 	Data     interface{}
+}
+
+type Response struct {
+	Data *http.Response
+	Err  error
 }
 
 type RefreshItemsList struct{}

@@ -13,7 +13,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/maniac-en/req/internal/backend/endpoints"
 	"github.com/maniac-en/req/internal/backend/http"
-	"github.com/maniac-en/req/internal/log"
 	componenttypes "github.com/maniac-en/req/internal/tui/components/ComponentTypes"
 	methodpicker "github.com/maniac-en/req/internal/tui/components/MethodPicker"
 	urlinput "github.com/maniac-en/req/internal/tui/components/UrlInput"
@@ -97,6 +96,12 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 			Height: msg.Height,
 			Width:  r.width - 4,
 		})
+	case messages.Response:
+		if msg.Err != nil {
+			// TODO: do something here idek
+		}
+		r.SetState(msg.Data)
+		r.loading = false
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
@@ -127,13 +132,18 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 			}
 			r.responsePage = true
 			r.loading = true
-			res, err := r.client.ExecuteRequest(request)
-			r.loading = false
-			if err != nil {
-				log.Warn("error occurred while trying to send a request", err)
+			sendMsg := func() tea.Msg {
+				res, err := r.client.ExecuteRequest(request)
+				if err != nil {
+					return messages.Response{
+						Err: err,
+					}
+				}
+				return messages.Response{
+					Data: res,
+				}
 			}
-			r.viewport.SetState(res)
-			return r, r.spinner.Tick
+			return r, tea.Batch(r.spinner.Tick, sendMsg)
 		case key.Matches(msg, keybinds.Keys.Save):
 			for _, val := range r.components {
 				r.endpoint = val.UpdateState(r.endpoint)
@@ -249,7 +259,14 @@ func methodItemMapper(items []string) []list.Item {
 	return listItems
 }
 
-func NewRequestView(epManager *endpoints.EndpointsManager, update func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error), order int) *RequestView {
+type RequestViewConfig struct {
+	EpManager *endpoints.EndpointsManager
+	Update    func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error)
+	Order     int
+	Client    *http.HTTPManager
+}
+
+func NewRequestView(cfg RequestViewConfig) *RequestView {
 	mpConfig := createMethodPickerConfig()
 
 	uiConfig := createURLInputConfig()
@@ -261,13 +278,13 @@ func NewRequestView(epManager *endpoints.EndpointsManager, update func(context.C
 			methodPicker: methodpicker.NewMethodPicker(mpConfig),
 			urlInput:     urlinput.NewUrlInput(uiConfig),
 		},
-		epManager: epManager,
-		focused:   methodPicker,
-		viewport:  viewport.NewViewport(),
-		order:     order,
-		update:    update,
-		// FIX: use app context http manager
-		client:       http.NewHTTPManager(),
+
+		epManager:    cfg.EpManager,
+		focused:      methodPicker,
+		viewport:     viewport.NewViewport(),
+		order:        cfg.Order,
+		update:       cfg.Update,
+		client:       cfg.Client,
 		responsePage: false,
 		spinner:      s,
 	}

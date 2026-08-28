@@ -114,6 +114,13 @@ func runMigrations() error {
 }
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	// initialize paths first
 	if err := initPaths(); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize: %v\n", err)
@@ -139,11 +146,13 @@ func main() {
 
 	// run database migrations
 	if err := runMigrations(); err != nil {
-		log.Fatal("failed to run migrations", "error", err)
+		return fmt.Errorf("failed to run migrations", "error", err)
 	}
 
 	// create database client and managers
 	db := database.New(DB)
+	defer DB.Close()
+
 	collectionsManager := collections.NewCollectionsManager(db)
 	endpointsManager := endpoints.NewEndpointsManager(db)
 	httpManager := http.NewHTTPManager()
@@ -174,6 +183,7 @@ func main() {
 	// Entry point for UI
 	program := tea.NewProgram(app.NewAppModel(appContext), tea.WithAltScreen())
 	if _, err := program.Run(); err != nil {
-		log.Fatal("Fatal error:", err)
+		return fmt.Errorf("fatal error: %w", err)
 	}
+	return nil
 }
