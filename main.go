@@ -17,6 +17,7 @@ import (
 	"github.com/maniac-en/req/internal/backend/endpoints"
 	"github.com/maniac-en/req/internal/backend/history"
 	"github.com/maniac-en/req/internal/backend/http"
+	"github.com/maniac-en/req/internal/config"
 	"github.com/maniac-en/req/internal/log"
 	"github.com/maniac-en/req/internal/tui/app"
 	_ "github.com/mattn/go-sqlite3"
@@ -145,7 +146,7 @@ func run() error {
 
 	// run database migrations
 	if err := runMigrations(); err != nil {
-		return fmt.Errorf("failed to run migrations", "error", err)
+		return fmt.Errorf("failed to run migrations: %s", err)
 	}
 
 	// create database client and managers
@@ -171,8 +172,12 @@ func run() error {
 	log.Info("application started successfully")
 
 	// Entry point for UI
+	err := config.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("fatal error: %w", err)
+	}
 	program := tea.NewProgram(app.NewAppModel(appContext), tea.WithAltScreen())
-	if _, err := program.Run(); err != nil {
+	if _, err = program.Run(); err != nil {
 		return fmt.Errorf("fatal error: %w", err)
 	}
 	return nil

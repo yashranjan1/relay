@@ -27,23 +27,23 @@ type CollectionsView struct {
 	order            int
 }
 
-func (c CollectionsView) Init() tea.Cmd {
+func (c *CollectionsView) Init() tea.Cmd {
 	return nil
 }
 
-func (c CollectionsView) Name() string {
+func (c *CollectionsView) Name() string {
 	return "Collections"
 }
 
-func (c CollectionsView) Help() []key.Binding {
+func (c *CollectionsView) Help() []key.Binding {
 	return c.list.Help()
 }
 
-func (c CollectionsView) GetFooterSegment() string {
+func (c *CollectionsView) GetFooterSegment() string {
 	return c.list.GetSelected().Title()
 }
 
-func (c CollectionsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
+func (c *CollectionsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
@@ -70,6 +70,15 @@ func (c CollectionsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	case messages.DeleteItem:
 		c.manager.Delete(context.Background(), msg.ItemID)
 		c.list.RefreshItems()
+	case messages.ChooseItem[optionsProvider.Option]:
+		c.list.OnBlur()
+		return c, func() tea.Msg {
+			return messages.NavigateToView{
+				ViewName: string(Endpoints),
+				Target:   MainModel,
+				Data:     msg.Item,
+			}
+		}
 	}
 
 	c.list, cmd = c.list.Update(msg)
@@ -78,23 +87,23 @@ func (c CollectionsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
-func (c CollectionsView) View() string {
+func (c *CollectionsView) View() string {
 	return c.list.View()
 }
 
-func (c CollectionsView) SetState(items ...any) error {
+func (c *CollectionsView) SetState(items ...any) error {
 	return errors.New("This view does not implement set state")
 }
 
-func (c CollectionsView) Order() int {
+func (c *CollectionsView) Order() int {
 	return c.order
 }
 
-func (c CollectionsView) OnFocus() {
-
+func (c *CollectionsView) OnFocus() tea.Cmd {
+	return c.list.UpdateState()
 }
 
-func (c CollectionsView) OnBlur() {
+func (c *CollectionsView) OnBlur() {
 
 }
 

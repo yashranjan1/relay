@@ -15,6 +15,7 @@ import (
 	"github.com/maniac-en/req/internal/backend/http"
 	componenttypes "github.com/maniac-en/req/internal/tui/components/ComponentTypes"
 	methodpicker "github.com/maniac-en/req/internal/tui/components/MethodPicker"
+	optionsProvider "github.com/maniac-en/req/internal/tui/components/OptionsProvider"
 	urlinput "github.com/maniac-en/req/internal/tui/components/UrlInput"
 	viewport "github.com/maniac-en/req/internal/tui/components/ViewPort"
 	"github.com/maniac-en/req/internal/tui/keybinds"
@@ -51,6 +52,7 @@ type RequestView struct {
 	order        int
 	update       func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error)
 	endpoint     endpoints.EndpointEntity
+	collection   optionsProvider.Option
 }
 
 func (r *RequestView) Init() tea.Cmd {
@@ -80,7 +82,7 @@ func (r *RequestView) Help() []key.Binding {
 }
 
 func (r *RequestView) GetFooterSegment() string {
-	return ""
+	return fmt.Sprintf("%s/%s", r.collection.Name, r.endpoint.Name)
 }
 
 func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
@@ -112,7 +114,7 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 			return r, func() tea.Msg {
 				return messages.NavigateToView{
 					ViewName: Endpoints,
-					Target:   Endpoints,
+					Target:   MainModel,
 				}
 			}
 		case key.Matches(msg, keybinds.Keys.Next):
@@ -179,7 +181,7 @@ func (r *RequestView) shift(next bool) {
 	if next {
 		r.index = (r.index + 1) % len(componentList)
 	} else {
-		r.index = (r.index - 1) % len(componentList)
+		r.index = (r.index - 1 + len(componentList)) % len(componentList)
 	}
 	r.endpoint = r.components[r.focused].UpdateState(r.endpoint)
 	r.components[r.focused].OnBlur()
@@ -221,8 +223,9 @@ func (r *RequestView) View() string {
 
 func (r *RequestView) SetState(items ...any) error {
 	if len(items) == 1 {
-		if id, ok := items[0].(int64); ok {
-			ep, err := r.epManager.Read(context.Background(), id)
+		if data, ok := items[0].(EndpointData); ok {
+			ep, err := r.epManager.Read(context.Background(), data.EndpointID)
+			r.collection = data.Collection
 			if err != nil {
 				// FIX: do something over here
 			}
@@ -240,8 +243,9 @@ func (r *RequestView) Order() int {
 	return r.order
 }
 
-func (r *RequestView) OnFocus() {
+func (r *RequestView) OnFocus() tea.Cmd {
 	r.components[r.focused].OnFocus()
+	return nil
 }
 
 func (r *RequestView) OnBlur() {

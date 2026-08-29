@@ -78,7 +78,10 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 			return messages.NavigateToView{
 				ViewName: "request",
 				Target:   MainModel,
-				Data:     msg.Item.ID,
+				Data: EndpointData{
+					Collection: e.collection,
+					EndpointID: msg.Item.ID,
+				},
 			}
 		}
 	case messages.NavigateToView:
@@ -88,7 +91,6 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		// FIX: idek
 		// e.requestView.OnBlur()
 		e.focused = listView
-		e.list.OnFocus()
 
 	case tea.KeyMsg:
 		switch {
@@ -119,8 +121,8 @@ func (e *EndpointsView) View() string {
 	return e.list.View()
 }
 
-func (e *EndpointsView) OnFocus() {
-
+func (e *EndpointsView) OnFocus() tea.Cmd {
+	return e.list.UpdateState()
 }
 
 func (e *EndpointsView) SetState(items ...any) error {

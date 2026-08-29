@@ -3,6 +3,7 @@ package views
 import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	optionsProvider "github.com/maniac-en/req/internal/tui/components/OptionsProvider"
 )
 
 type ViewInterface interface {
@@ -14,6 +15,11 @@ type ViewInterface interface {
 	View() string
 	Order() int
 	SetState(...any) error
-	OnFocus()
+	OnFocus() tea.Cmd
 	OnBlur()
+}
+
+type EndpointData struct {
+	EndpointID int64
+	Collection optionsProvider.Option
 }

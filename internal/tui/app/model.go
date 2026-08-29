@@ -9,7 +9,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/maniac-en/req/internal/log"
-	optionsProvider "github.com/maniac-en/req/internal/tui/components/OptionsProvider"
 	"github.com/maniac-en/req/internal/tui/keybinds"
 	"github.com/maniac-en/req/internal/tui/messages"
 	"github.com/maniac-en/req/internal/tui/styles"
@@ -60,16 +59,6 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		}
 		return a, tea.Batch(cmds...)
-	case messages.ChooseItem[optionsProvider.Option]:
-		switch msg.Source {
-		case "collections":
-			return a, func() tea.Msg {
-				return messages.NavigateToView{
-					ViewName: string(Endpoints),
-					Data:     msg.Item,
-				}
-			}
-		}
 	case messages.NavigateToView:
 		if msg.Data != nil {
 			err := a.Views[ViewName(msg.ViewName)].SetState(msg.Data)
@@ -84,8 +73,10 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.Views[a.focusedView].OnBlur()
 
 		a.focusedView = ViewName(msg.ViewName)
-		a.Views[a.focusedView].OnFocus()
-		return a, nil
+		cmd = a.Views[a.focusedView].OnFocus()
+		cmds = append(cmds, cmd)
+
+		return a, tea.Batch(cmds...)
 
 	case messages.ShowError:
 		log.Error("user operation failed", "error", msg.Message)
