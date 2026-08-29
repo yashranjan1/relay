@@ -102,7 +102,7 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		if msg.Err != nil {
 			// TODO: do something here idek
 		}
-		r.SetState(msg.Data)
+		r.viewport.SetState(msg.Data)
 		r.loading = false
 	case tea.KeyMsg:
 		switch {

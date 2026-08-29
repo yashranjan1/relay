@@ -6,8 +6,7 @@ func RequestLayout(height, width int) func(...string) string {
 	return lipgloss.NewStyle().
 		Height(height).
 		Width(width).
-		Margin(0, 0, 0, 1).
-		Padding(1, 0, 0, 0).
+		Padding(1, 0, 0, 1).
 		Render
 }
 
@@ -26,7 +25,7 @@ func UrlInputStyle(active bool) lipgloss.Style {
 }
 
 func ResponseStyle(height, width int) func(...string) string {
-	return lipgloss.NewStyle().Margin(0, 0, 0, 5).Padding(1, 0, 0, 5).Height(height).Width(width).Render
+	return lipgloss.NewStyle().Padding(1, 0, 0, 1).Height(height).Width(width).Render
 }
 
 var (
