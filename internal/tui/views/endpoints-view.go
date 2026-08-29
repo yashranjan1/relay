@@ -8,20 +8,11 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-<<<<<<< HEAD
-	"github.com/charmbracelet/lipgloss"
 	"github.com/yashranjan1/relay/internal/backend/database"
 	"github.com/yashranjan1/relay/internal/backend/endpoints"
 	optionsProvider "github.com/yashranjan1/relay/internal/tui/components/OptionsProvider"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
 	"github.com/yashranjan1/relay/internal/tui/messages"
-=======
-	"github.com/maniac-en/req/internal/backend/database"
-	"github.com/maniac-en/req/internal/backend/endpoints"
-	optionsProvider "github.com/maniac-en/req/internal/tui/components/OptionsProvider"
-	"github.com/maniac-en/req/internal/tui/keybinds"
-	"github.com/maniac-en/req/internal/tui/messages"
->>>>>>> 2463b9c (refactor: Improve TUI architecture and state handling)
 )
 
 type epFocused string
@@ -87,7 +78,10 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 			return messages.NavigateToView{
 				ViewName: "request",
 				Target:   MainModel,
-				Data:     msg.Item.ID,
+				Data: EndpointData{
+					Collection: e.collection,
+					EndpointID: msg.Item.ID,
+				},
 			}
 		}
 	case messages.NavigateToView:
@@ -97,7 +91,6 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		// FIX: idek
 		// e.requestView.OnBlur()
 		e.focused = listView
-		e.list.OnFocus()
 
 	case tea.KeyMsg:
 		switch {
@@ -128,8 +121,8 @@ func (e *EndpointsView) View() string {
 	return e.list.View()
 }
 
-func (e *EndpointsView) OnFocus() {
-
+func (e *EndpointsView) OnFocus() tea.Cmd {
+	return e.list.UpdateState()
 }
 
 func (e *EndpointsView) SetState(items ...any) error {

@@ -145,7 +145,7 @@ func run() error {
 
 	// run database migrations
 	if err := runMigrations(); err != nil {
-		return fmt.Errorf("failed to run migrations", "error", err)
+		return fmt.Errorf("failed to run migrations: %s", err)
 	}
 
 	// create database client and managers
@@ -171,8 +171,12 @@ func run() error {
 	log.Info("application started successfully")
 
 	// Entry point for UI
+	err := config.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("fatal error: %w", err)
+	}
 	program := tea.NewProgram(app.NewAppModel(appContext), tea.WithAltScreen())
-	if _, err := program.Run(); err != nil {
+	if _, err = program.Run(); err != nil {
 		return fmt.Errorf("fatal error: %w", err)
 	}
 	return nil

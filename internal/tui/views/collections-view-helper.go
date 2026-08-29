@@ -15,7 +15,7 @@ func createCollectionDelegate(active bool) list.ItemDelegate {
 		d.Styles.SelectedTitle = styles.SelectedInactiveListStyle
 
 	}
-	d.Styles.SelectedDesc = styles.UnselectedListStyle
+	d.Styles.SelectedDesc = styles.SelectedActiveListStyle
 
 	return d
 }

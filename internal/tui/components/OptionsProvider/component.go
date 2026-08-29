@@ -110,6 +110,16 @@ func (o OptionsProvider[T, U]) Update(msg tea.Msg) (OptionsProvider[T, U], tea.C
 	return o, tea.Batch(cmds...)
 }
 
+func (o *OptionsProvider[T, U]) UpdateState() tea.Cmd {
+	rawItems, err := o.getItems(context.Background())
+	if err != nil {
+		// FIX: add err handling
+	}
+
+	items := o.itemMapper(rawItems)
+	return o.list.SetItems(items)
+}
+
 func (o OptionsProvider[T, U]) View() string {
 	if o.focused == textComponent {
 		return lipgloss.JoinVertical(lipgloss.Left, o.list.View(), o.input.View())
@@ -118,11 +128,9 @@ func (o OptionsProvider[T, U]) View() string {
 }
 
 func (o *OptionsProvider[T, U]) OnFocus() {
-	o.list.SetDelegate(o.delegateGenner(true))
 }
 
 func (o *OptionsProvider[T, U]) OnBlur() {
-	o.list.SetDelegate(o.delegateGenner(false))
 }
 
 func (o OptionsProvider[T, U]) GetSelected() Option {

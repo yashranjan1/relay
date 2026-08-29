@@ -6,8 +6,8 @@ func RequestLayout(height, width int) func(...string) string {
 	return lipgloss.NewStyle().
 		Height(height).
 		Width(width).
-		Margin(0, 0, 0, 5).
-		Padding(1, 0, 0, 10).
+		Margin(0, 0, 0, 1).
+		Padding(1, 0, 0, 0).
 		Render
 }
 
@@ -15,7 +15,7 @@ func UrlInputStyle(active bool) lipgloss.Style {
 	var color lipgloss.Color
 
 	if active {
-		color = accent
+		color = AppTheme.Accent
 	}
 
 	return lipgloss.NewStyle().
@@ -30,6 +30,11 @@ func ResponseStyle(height, width int) func(...string) string {
 }
 
 var (
-	ActiveRequestItem   = lipgloss.NewStyle().Foreground(accent)
+	ActiveRequestItem   = lipgloss.NewStyle().Foreground(AppTheme.Accent)
 	InactiveRequestItem = lipgloss.NewStyle()
 )
+
+func initRequestStyles() {
+	ActiveRequestItem = lipgloss.NewStyle().Foreground(AppTheme.Accent)
+	InactiveRequestItem = lipgloss.NewStyle()
+}
