@@ -12,6 +12,7 @@ import (
 
 type ListConfig[T, U any] struct {
 	OnSelectAction tea.Msg
+	OnChangeAction func(int64)
 
 	ShowPagination bool
 	ShowStatusBar  bool
@@ -21,7 +22,8 @@ type ListConfig[T, U any] struct {
 
 	FilteringEnabled bool
 
-	Delegate          list.ItemDelegate
+	Placeholder       string
+	Delegate          func(bool) list.ItemDelegate
 	KeyMap            list.KeyMap
 	AdditionalKeymaps *keybinds.ListKeyMap
 

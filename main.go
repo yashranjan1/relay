@@ -14,10 +14,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/maniac-en/req/internal/backend/collections"
 	"github.com/maniac-en/req/internal/backend/database"
-	"github.com/maniac-en/req/internal/backend/demo"
 	"github.com/maniac-en/req/internal/backend/endpoints"
 	"github.com/maniac-en/req/internal/backend/history"
 	"github.com/maniac-en/req/internal/backend/http"
+	"github.com/maniac-en/req/internal/config"
 	"github.com/maniac-en/req/internal/log"
 	"github.com/maniac-en/req/internal/tui/app"
 	_ "github.com/mattn/go-sqlite3"
@@ -70,6 +70,7 @@ func initPaths() error {
 	}
 	DBPATH = filepath.Join(APPDIR, "app.db")
 	LOGPATH = filepath.Join(APPDIR, "req.log")
+
 	return nil
 }
 
@@ -113,6 +114,13 @@ func runMigrations() error {
 }
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	// initialize paths first
 	if err := initPaths(); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize: %v\n", err)
@@ -138,11 +146,13 @@ func main() {
 
 	// run database migrations
 	if err := runMigrations(); err != nil {
-		log.Fatal("failed to run migrations", "error", err)
+		return fmt.Errorf("failed to run migrations: %s", err)
 	}
 
 	// create database client and managers
 	db := database.New(DB)
+	defer DB.Close()
+
 	collectionsManager := collections.NewCollectionsManager(db)
 	endpointsManager := endpoints.NewEndpointsManager(db)
 	httpManager := http.NewHTTPManager()
@@ -157,22 +167,18 @@ func main() {
 		getVersion(),
 	)
 
-	// populate dummy data for demo
-	demoGenerator := demo.NewDemoGenerator(collectionsManager, endpointsManager)
-	dummyDataCreated, err := demoGenerator.PopulateDummyData(context.Background())
-	if err != nil {
-		log.Error("failed to populate dummy data", "error", err)
-	} else if dummyDataCreated {
-		// appContext.SetDummyDataCreated(true)
-	}
-
 	log.Info("application initialized", "components", []string{"database", "collections", "endpoints", "http", "history", "logging", "demo"})
 	log.Debug("configuration loaded", "collections_manager", collectionsManager != nil, "endpoints", endpointsManager != nil, "database", db != nil, "http_manager", httpManager != nil, "history_manager", historyManager != nil)
 	log.Info("application started successfully")
 
 	// Entry point for UI
-	program := tea.NewProgram(app.NewAppModel(appContext), tea.WithAltScreen())
-	if _, err := program.Run(); err != nil {
-		log.Fatal("Fatal error:", err)
+	err := config.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("fatal error: %w", err)
 	}
+	program := tea.NewProgram(app.NewAppModel(appContext), tea.WithAltScreen())
+	if _, err = program.Run(); err != nil {
+		return fmt.Errorf("fatal error: %w", err)
+	}
+	return nil
 }

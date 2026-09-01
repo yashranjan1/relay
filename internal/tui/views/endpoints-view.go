@@ -15,8 +15,15 @@ import (
 	"github.com/maniac-en/req/internal/tui/messages"
 )
 
+type epFocused string
+
+const (
+	listView = "listview"
+)
+
 type EndpointsView struct {
 	height     int
+	focused    epFocused
 	collection optionsProvider.Option
 	width      int
 	order      int
@@ -50,19 +57,61 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		e.list, cmd = e.list.Update(msg)
 		cmds = append(cmds, cmd)
 	case messages.ItemAdded:
-		e.manager.CreateEndpoint(context.Background(), endpoints.EndpointData{
+		_, err := e.manager.CreateEndpoint(context.Background(), endpoints.EndpointData{
 			CollectionID: e.collection.ID,
 			Name:         msg.Item,
 			Method:       "GET",
 		})
+		if err != nil {
+			//TODO: handle this
+		}
+	case messages.RefreshItemsList:
+		e.list.RefreshItems()
 	case messages.ItemEdited:
 		e.manager.UpdateEndpointName(context.Background(), msg.ItemID, msg.Item)
 	case messages.DeleteItem:
 		e.manager.Delete(context.Background(), msg.ItemID)
 		e.list.RefreshItems()
+	case messages.ChooseItem[optionsProvider.Option]:
+		e.list.OnBlur()
+		return e, func() tea.Msg {
+			return messages.NavigateToView{
+				ViewName: "request",
+				Target:   MainModel,
+				Data: EndpointData{
+					Collection: e.collection,
+					EndpointID: msg.Item.ID,
+				},
+			}
+		}
+	case messages.NavigateToView:
+		if msg.Target != Endpoints {
+			break
+		}
+		// FIX: idek
+		// e.requestView.OnBlur()
+		e.focused = listView
+
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, keybinds.Keys.Back):
+			if e.focused == listView {
+				// e.requestView.SetState(endpoints.EndpointEntity{})
+				return e, func() tea.Msg {
+					return messages.NavigateToView{
+						ViewName: Collections,
+						Target:   MainModel,
+					}
+				}
+			}
+		}
 	}
 
-	e.list, cmd = e.list.Update(msg)
+	switch e.focused {
+	case listView:
+		e.list, cmd = e.list.Update(msg)
+	}
+
 	cmds = append(cmds, cmd)
 
 	return e, tea.Batch(cmds...)
@@ -72,11 +121,12 @@ func (e *EndpointsView) View() string {
 	return e.list.View()
 }
 
-func (e *EndpointsView) OnFocus() {
-
+func (e *EndpointsView) OnFocus() tea.Cmd {
+	return e.list.UpdateState()
 }
 
 func (e *EndpointsView) SetState(items ...any) error {
+	// TODO: Something over here should also set the state for the request view
 	if len(items) == 1 {
 		if collection, ok := items[0].(optionsProvider.Option); ok {
 			e.collection = collection
@@ -133,8 +183,10 @@ func NewEndpointsView(epManager *endpoints.EndpointsManager, order int) *Endpoin
 	config.ItemMapper = itemMapperEp
 	config.AdditionalKeymaps = keybinds
 	config.Source = "endpoints"
+	config.Placeholder = "Add a new endpoint..."
 
 	view.list = optionsProvider.NewOptionsProvider(config)
+	view.focused = listView
 
 	return view
 }
