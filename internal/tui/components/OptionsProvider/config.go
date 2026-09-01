@@ -7,7 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/maniac-en/req/internal/tui/keybinds"
+	"github.com/yashranjan1/relay/internal/tui/keybinds"
 )
 
 type ListConfig[T, U any] struct {

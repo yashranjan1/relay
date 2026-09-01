@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/maniac-en/req/internal/backend/crud"
-	"github.com/maniac-en/req/internal/backend/database"
-	"github.com/maniac-en/req/internal/log"
+	"github.com/yashranjan1/relay/internal/backend/crud"
+	"github.com/yashranjan1/relay/internal/backend/database"
+	"github.com/yashranjan1/relay/internal/log"
 )
 
 func NewEndpointsManager(db *database.Queries) *EndpointsManager {

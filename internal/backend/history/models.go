@@ -4,8 +4,8 @@ package history
 import (
 	"time"
 
-	"github.com/maniac-en/req/internal/backend/crud"
-	"github.com/maniac-en/req/internal/backend/database"
+	"github.com/yashranjan1/relay/internal/backend/crud"
+	"github.com/yashranjan1/relay/internal/backend/database"
 )
 
 type HistoryManager struct {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/maniac-en/req/internal/backend/crud"
-	"github.com/maniac-en/req/internal/backend/testutils"
+	"github.com/yashranjan1/relay/internal/backend/crud"
+	"github.com/yashranjan1/relay/internal/backend/testutils"
 )
 
 func TestCollectionsManagerCRUD(t *testing.T) {

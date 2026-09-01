@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maniac-en/req/internal/backend/testutils"
+	"github.com/yashranjan1/relay/internal/backend/testutils"
 )
 
 func TestHistoryManagerCRUD(t *testing.T) {

@@ -8,11 +8,11 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/maniac-en/req/internal/backend/database"
-	"github.com/maniac-en/req/internal/backend/endpoints"
-	optionsProvider "github.com/maniac-en/req/internal/tui/components/OptionsProvider"
-	"github.com/maniac-en/req/internal/tui/keybinds"
-	"github.com/maniac-en/req/internal/tui/messages"
+	"github.com/yashranjan1/relay/internal/backend/database"
+	"github.com/yashranjan1/relay/internal/backend/endpoints"
+	optionsProvider "github.com/yashranjan1/relay/internal/tui/components/OptionsProvider"
+	"github.com/yashranjan1/relay/internal/tui/keybinds"
+	"github.com/yashranjan1/relay/internal/tui/messages"
 )
 
 type EndpointsView struct {

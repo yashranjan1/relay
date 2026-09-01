@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/maniac-en/req/internal/log"
+	"github.com/yashranjan1/relay/internal/log"
 )
 
 func ValidateName(name string) error {

@@ -44,3 +44,9 @@ build/
 
 # old tui
 internal/old_tui/
+
+
+# node
+docs/node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/

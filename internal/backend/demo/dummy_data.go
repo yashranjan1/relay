@@ -3,9 +3,9 @@ package demo
 import (
 	"context"
 
-	"github.com/maniac-en/req/internal/backend/collections"
-	"github.com/maniac-en/req/internal/backend/endpoints"
-	"github.com/maniac-en/req/internal/log"
+	"github.com/yashranjan1/relay/internal/backend/collections"
+	"github.com/yashranjan1/relay/internal/backend/endpoints"
+	"github.com/yashranjan1/relay/internal/log"
 )
 
 type DemoGenerator struct {

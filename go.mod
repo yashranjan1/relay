@@ -1,4 +1,4 @@
-module github.com/maniac-en/req
+module github.com/yashranjan1/relay
 
 go 1.24.4
 

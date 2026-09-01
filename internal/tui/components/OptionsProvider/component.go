@@ -7,9 +7,9 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/maniac-en/req/internal/log"
-	"github.com/maniac-en/req/internal/tui/keybinds"
-	"github.com/maniac-en/req/internal/tui/messages"
+	"github.com/yashranjan1/relay/internal/log"
+	"github.com/yashranjan1/relay/internal/tui/keybinds"
+	"github.com/yashranjan1/relay/internal/tui/messages"
 )
 
 type focusedComp string

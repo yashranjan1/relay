@@ -4,8 +4,8 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/maniac-en/req/internal/tui/messages"
-	"github.com/maniac-en/req/internal/tui/styles"
+	"github.com/yashranjan1/relay/internal/tui/messages"
+	"github.com/yashranjan1/relay/internal/tui/styles"
 )
 
 type OptionsInput struct {
