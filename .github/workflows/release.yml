@@ -35,7 +35,7 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
-          BINARY_NAME="req-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}"
+          BINARY_NAME="relay-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}"
           if [ "${{ matrix.goos }}" = "windows" ]; then
             BINARY_NAME="${BINARY_NAME}.exe"
           fi
@@ -53,10 +53,47 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history needed for tag dates
+
       - name: Extract version from tag
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Get previous tag
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 "${{ env.VERSION }}^" 2>/dev/null || echo "")
+          echo "PREV_TAG=$PREV_TAG" >> $GITHUB_ENV
+
+      - name: Generate changelog from satisfaction criteria
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x ./scripts/generate-changelog.sh
+          ./scripts/generate-changelog.sh "$PREV_TAG" "${{ env.VERSION }}" > changelog.md
+
+      - name: Assemble release body
+        run: |
+          cat <<'EOF' > release-body.md
+          A terminal-based API client built for the Boot.dev Hackathon 2025.
+
+          **Installation:**
+          ```bash
+                    go install github.com/yashranjan1/relay@${{ env.VERSION }}
+          ```
+
+          **Prebuilt binaries:**
+          - Linux: `relay-${{ env.VERSION }}-linux-amd64`, `relay-${{ env.VERSION }}-linux-arm64`
+          - macOS: `relay-${{ env.VERSION }}-darwin-amd64`, `relay-${{ env.VERSION }}-darwin-arm64`
+          - Windows: `relay-${{ env.VERSION }}-windows-amd64.exe`
+
+          **Usage:** Run `relay` in your terminal
+
+          **Note:** This is early development software. Core HTTP execution features are still in progress.
+          EOF
+          cat changelog.md >> release-body.md
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -67,25 +104,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.VERSION }}
-          name: "Req ${{ env.VERSION }}"
-          body: |
-            A terminal-based API client built for the Boot.dev Hackathon 2025.
-            
-            **Installation:**
-            ```bash
-            go install github.com/maniac-en/req@${{ env.VERSION }}
-            ```
-            
-            **Prebuilt binaries:**
-            - Linux: `req-${{ env.VERSION }}-linux-amd64`, `req-${{ env.VERSION }}-linux-arm64`  
-            - macOS: `req-${{ env.VERSION }}-darwin-amd64`, `req-${{ env.VERSION }}-darwin-arm64`
-            - Windows: `req-${{ env.VERSION }}-windows-amd64.exe`
-            
-            **Usage:** Run `req` in your terminal
-            
-            **Note:** This is early development software. Core HTTP execution features are still in progress.
-            
-            Full changelog: https://github.com/maniac-en/req/commits/${{ env.VERSION }}
+          name: "relay ${{ env.VERSION }}"
+          body_path: release-body.md
           files: ./binaries/**/*
           draft: false
           prerelease: ${{ contains(env.VERSION, '-') }}
