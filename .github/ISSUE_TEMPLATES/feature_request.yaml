@@ -1,0 +1,36 @@
+name: Feature Request
+description: File a feature request or enhancement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this feature request!
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+      description: Describe the feature you would like to see added.
+    validations:
+      required: true
+  - type: textarea
+    id: satisfaction-criteria
+    attributes:
+      label: Satisfaction Criteria
+      description: What must be true for this feature to be considered done? These will be pulled into release notes when the linked PR merges.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Completion & Prerequisites
+      description: Please confirm the following before submitting.
+      options:
+        - label: I have searched existing issues to make sure this is not a duplicate.
+          required: true
+        - label: I am willing to submit a Pull Request for this feature.
+          required: false
