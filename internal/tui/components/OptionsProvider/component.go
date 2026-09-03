@@ -68,6 +68,9 @@ func (o OptionsProvider[T, U]) Update(msg tea.Msg) (OptionsProvider[T, U], tea.C
 					o.focused = textComponent
 					return o, tea.Batch(cmds...)
 				case key.Matches(msg, o.keys.DeleteItem):
+					if o.GetSelected().ID == -1 {
+						return o, tea.Batch(cmds...)
+					}
 					return o, func() tea.Msg { return messages.DeleteItem{ItemID: int64(o.GetSelected().ID)} }
 				case key.Matches(msg, o.keys.Choose):
 					return o, func() tea.Msg {
