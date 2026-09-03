@@ -3,7 +3,7 @@
 
 Relay helps you manage, edit, and test API endpoints through organized collections.
 
-![thing](./gifs/startup.gif)
+![thing](../gifs/startup.gif)
 
 ## Collections
 Relay uses **Collections** to group related endpoints together. Each collection serves as a workspace for a specific set of API endpoints.
