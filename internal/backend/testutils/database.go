@@ -6,8 +6,8 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/yashranjan1/relay/internal/backend/database"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/yashranjan1/relay/internal/backend/database"
 )
 
 // SetupTestDB creates an in-memory SQLite database with specified tables

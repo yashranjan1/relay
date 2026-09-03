@@ -9,7 +9,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/yashranjan1/relay/internal/log"
-	optionsProvider "github.com/yashranjan1/relay/internal/tui/components/OptionsProvider"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
 	"github.com/yashranjan1/relay/internal/tui/messages"
 	"github.com/yashranjan1/relay/internal/tui/styles"
@@ -21,6 +20,7 @@ type ViewName string
 const (
 	Collections ViewName = "collections"
 	Endpoints   ViewName = "endpoints"
+	Request     ViewName = "request"
 )
 
 type Heading struct {
@@ -47,39 +47,37 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
+	case messages.DeleteItem:
+		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
+	case messages.ItemAdded:
+		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
 	case tea.WindowSizeMsg:
 		a.height = msg.Height
 		a.width = msg.Width
-		for key, _ := range a.Views {
+		for key := range a.Views {
 			a.Views[key], cmd = a.Views[key].Update(tea.WindowSizeMsg{Height: a.AvailableHeight(), Width: msg.Width})
 			cmds = append(cmds, cmd)
 		}
-		cmds = append(cmds, cmd)
 		return a, tea.Batch(cmds...)
-	case messages.ChooseItem[optionsProvider.Option]:
-		switch msg.Source {
-		case "collections":
-			return a, func() tea.Msg {
-				return messages.NavigateToView{
-					ViewName: string(Endpoints),
-					Data:     msg.Item,
-				}
-			}
-		}
 	case messages.NavigateToView:
-		a.Views[a.focusedView].OnBlur()
-
 		if msg.Data != nil {
 			err := a.Views[ViewName(msg.ViewName)].SetState(msg.Data)
 			if err != nil {
 				log.Error("failed to set view state during navigation", "target_view", msg.ViewName, "error", err)
 				return a, nil
 			}
+		} else if msg.Target != views.MainModel {
+			break
 		}
 
+		a.Views[a.focusedView].OnBlur()
+
 		a.focusedView = ViewName(msg.ViewName)
-		a.Views[a.focusedView].OnFocus()
-		return a, nil
+		cmd = a.Views[a.focusedView].OnFocus()
+		cmds = append(cmds, cmd)
+
+		return a, tea.Batch(cmds...)
+
 	case messages.ShowError:
 		log.Error("user operation failed", "error", msg.Message)
 		a.errorMsg = msg.Message
@@ -89,15 +87,6 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, keybinds.Keys.Quit):
 			return a, tea.Quit
-		case key.Matches(msg, keybinds.Keys.Back):
-			if a.focusedView == Endpoints {
-				return a, func() tea.Msg {
-					return messages.NavigateToView{
-						ViewName: string(Collections),
-						Data:     nil,
-					}
-				}
-			}
 		}
 	}
 
@@ -191,9 +180,20 @@ func NewAppModel(ctx *Context) AppModel {
 		help:        help.New(),
 		keys:        appKeybinds,
 	}
+
+	epUpdateFunc := model.ctx.Endpoints.UpdateEndpoint
+
+	reqCfg := views.RequestViewConfig{
+		EpManager: model.ctx.Endpoints,
+		Update:    epUpdateFunc,
+		Order:     3,
+		Client:    model.ctx.HTTP,
+	}
+
 	model.Views = map[ViewName]views.ViewInterface{
 		Collections: views.NewCollectionsView(model.ctx.Collections, model.ctx.Endpoints, 1),
 		Endpoints:   views.NewEndpointsView(model.ctx.Endpoints, 2),
+		Request:     views.NewRequestView(reqCfg),
 	}
 	return model
 }

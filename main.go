@@ -12,16 +12,16 @@ import (
 	"runtime/debug"
 
 	tea "github.com/charmbracelet/bubbletea"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/pressly/goose/v3"
 	"github.com/yashranjan1/relay/internal/backend/collections"
 	"github.com/yashranjan1/relay/internal/backend/database"
-	"github.com/yashranjan1/relay/internal/backend/demo"
 	"github.com/yashranjan1/relay/internal/backend/endpoints"
 	"github.com/yashranjan1/relay/internal/backend/history"
 	"github.com/yashranjan1/relay/internal/backend/http"
+	"github.com/yashranjan1/relay/internal/config"
 	"github.com/yashranjan1/relay/internal/log"
 	"github.com/yashranjan1/relay/internal/tui/app"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/pressly/goose/v3"
 )
 
 // Embed migration files into the binary
@@ -64,12 +64,13 @@ func initPaths() error {
 	if err != nil {
 		return fmt.Errorf("error reading user's cache path: %w", err)
 	}
-	APPDIR = filepath.Join(userCacheDir, "req")
+	APPDIR = filepath.Join(userCacheDir, "relay")
 	if err := os.MkdirAll(APPDIR, 0o755); err != nil {
 		return fmt.Errorf("error creating app directory: %w", err)
 	}
 	DBPATH = filepath.Join(APPDIR, "app.db")
-	LOGPATH = filepath.Join(APPDIR, "req.log")
+	LOGPATH = filepath.Join(APPDIR, "relay.log")
+
 	return nil
 }
 
@@ -113,6 +114,13 @@ func runMigrations() error {
 }
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	// initialize paths first
 	if err := initPaths(); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize: %v\n", err)
@@ -121,7 +129,7 @@ func main() {
 
 	// initialize logging
 	logLevel := slog.LevelInfo
-	if os.Getenv("REQ_DEBUG") == "1" || os.Getenv("REQ_LOG_LEVEL") == "debug" {
+	if os.Getenv("RELAY_DEBUG") == "1" || os.Getenv("RELAY_LOG_LEVEL") == "debug" {
 		logLevel = slog.LevelDebug
 	}
 	log.Initialize(log.Config{
@@ -134,15 +142,17 @@ func main() {
 		}
 	}()
 
-	log.Info("starting req application")
+	log.Info("starting relay application")
 
 	// run database migrations
 	if err := runMigrations(); err != nil {
-		log.Fatal("failed to run migrations", "error", err)
+		return fmt.Errorf("failed to run migrations: %s", err)
 	}
 
 	// create database client and managers
 	db := database.New(DB)
+	defer DB.Close()
+
 	collectionsManager := collections.NewCollectionsManager(db)
 	endpointsManager := endpoints.NewEndpointsManager(db)
 	httpManager := http.NewHTTPManager()
@@ -157,22 +167,18 @@ func main() {
 		getVersion(),
 	)
 
-	// populate dummy data for demo
-	demoGenerator := demo.NewDemoGenerator(collectionsManager, endpointsManager)
-	dummyDataCreated, err := demoGenerator.PopulateDummyData(context.Background())
-	if err != nil {
-		log.Error("failed to populate dummy data", "error", err)
-	} else if dummyDataCreated {
-		// appContext.SetDummyDataCreated(true)
-	}
-
 	log.Info("application initialized", "components", []string{"database", "collections", "endpoints", "http", "history", "logging", "demo"})
 	log.Debug("configuration loaded", "collections_manager", collectionsManager != nil, "endpoints", endpointsManager != nil, "database", db != nil, "http_manager", httpManager != nil, "history_manager", historyManager != nil)
 	log.Info("application started successfully")
 
 	// Entry point for UI
-	program := tea.NewProgram(app.NewAppModel(appContext), tea.WithAltScreen())
-	if _, err := program.Run(); err != nil {
-		log.Fatal("Fatal error:", err)
+	err := config.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("fatal error: %w", err)
 	}
+	program := tea.NewProgram(app.NewAppModel(appContext), tea.WithAltScreen())
+	if _, err = program.Run(); err != nil {
+		return fmt.Errorf("fatal error: %w", err)
+	}
+	return nil
 }

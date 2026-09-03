@@ -23,6 +23,8 @@ type OptionsProvider[T, U any] struct {
 	list           list.Model
 	input          OptionsInput
 	onSelectAction tea.Msg
+	onChangeAction func(int64)
+	delegateGenner func(bool) list.ItemDelegate
 	keys           *keybinds.ListKeyMap
 	width          int
 	height         int
@@ -43,7 +45,7 @@ func (o Option) Description() string { return o.Subtext }
 func (o Option) Value() int64        { return o.ID }
 func (o Option) FilterValue() string { return o.Name }
 
-func (o OptionsProvider[T, U]) Init() tea.Cmd {
+func (o *OptionsProvider[T, U]) Init() tea.Cmd {
 	return nil
 }
 
@@ -66,6 +68,9 @@ func (o OptionsProvider[T, U]) Update(msg tea.Msg) (OptionsProvider[T, U], tea.C
 					o.focused = textComponent
 					return o, tea.Batch(cmds...)
 				case key.Matches(msg, o.keys.DeleteItem):
+					if o.GetSelected().ID == -1 {
+						return o, tea.Batch(cmds...)
+					}
 					return o, func() tea.Msg { return messages.DeleteItem{ItemID: int64(o.GetSelected().ID)} }
 				case key.Matches(msg, o.keys.Choose):
 					return o, func() tea.Msg {
@@ -75,6 +80,9 @@ func (o OptionsProvider[T, U]) Update(msg tea.Msg) (OptionsProvider[T, U], tea.C
 						}
 					}
 				case key.Matches(msg, o.keys.EditItem):
+					if o.GetSelected().ID == -1 {
+						return o, tea.Batch(cmds...)
+					}
 					o.list.SetSize(o.list.Width(), o.height-lipgloss.Height(o.input.View()))
 					o.input.SetInput(o.GetSelected().Name)
 					o.input.OnFocus(o.GetSelected().ID)
@@ -95,12 +103,27 @@ func (o OptionsProvider[T, U]) Update(msg tea.Msg) (OptionsProvider[T, U], tea.C
 	}
 	switch o.focused {
 	case listComponent:
+		index := o.list.Index()
 		o.list, cmd = o.list.Update(msg)
+		newIndex := o.list.Index()
+		if newIndex != index && o.onChangeAction != nil {
+			o.onChangeAction(o.GetSelected().ID)
+		}
 	case textComponent:
 		o.input, cmd = o.input.Update(msg)
 	}
 	cmds = append(cmds, cmd)
 	return o, tea.Batch(cmds...)
+}
+
+func (o *OptionsProvider[T, U]) UpdateState() tea.Cmd {
+	rawItems, err := o.getItems(context.Background())
+	if err != nil {
+		// FIX: add err handling
+	}
+
+	items := o.itemMapper(rawItems)
+	return o.list.SetItems(items)
 }
 
 func (o OptionsProvider[T, U]) View() string {
@@ -113,8 +136,7 @@ func (o OptionsProvider[T, U]) View() string {
 func (o *OptionsProvider[T, U]) OnFocus() {
 }
 
-func (o OptionsProvider[T, U]) OnBlur() {
-
+func (o *OptionsProvider[T, U]) OnBlur() {
 }
 
 func (o OptionsProvider[T, U]) GetSelected() Option {
@@ -125,7 +147,17 @@ func (o OptionsProvider[T, U]) GetSelected() Option {
 			Subtext: "",
 		}
 	}
-	return o.list.SelectedItem().(Option)
+
+	item := o.list.SelectedItem()
+
+	if item == nil {
+		return Option{
+			Name:    "No selection",
+			ID:      -1,
+			Subtext: "",
+		}
+	}
+	return item.(Option)
 }
 
 func (o OptionsProvider[T, U]) IsFiltering() bool {
@@ -139,6 +171,10 @@ func (o *OptionsProvider[T, U]) RefreshItems() {
 		return
 	}
 	o.list.SetItems(o.itemMapper(newItems))
+}
+
+func (o *OptionsProvider[T, U]) GetSize() (int, int) {
+	return o.width, o.height
 }
 
 func (o *OptionsProvider[T, U]) Help() []key.Binding {
@@ -181,7 +217,7 @@ func initList[T, U any](config *ListConfig[T, U]) list.Model {
 
 	items := config.ItemMapper(rawItems)
 
-	list := list.New(items, config.Delegate, 30, 30)
+	list := list.New(items, config.Delegate(true), 100, 30)
 
 	// list configuration
 	list.SetFilteringEnabled(config.FilteringEnabled)
@@ -201,12 +237,16 @@ func (o *OptionsProvider[T, U]) SetGetItemsFunc(getItems func(context.Context) (
 		log.Error("error fetching items")
 	}
 	o.list.SetItems(o.itemMapper(items))
+	if mappedItems := o.itemMapper(items); o.onChangeAction != nil && len(mappedItems) > 0 {
+		o.onChangeAction(mappedItems[0].(Option).ID)
+	}
+
 }
 
 func NewOptionsProvider[T, U any](config *ListConfig[T, U]) OptionsProvider[T, U] {
 	inputConfig := InputConfig{
 		CharLimit:   100,
-		Placeholder: "Add A New Collection...",
+		Placeholder: config.Placeholder,
 		Width:       22,
 		Prompt:      "",
 		KeyMap: InputKeyMaps{
@@ -216,12 +256,15 @@ func NewOptionsProvider[T, U any](config *ListConfig[T, U]) OptionsProvider[T, U
 	}
 
 	return OptionsProvider[T, U]{
-		list:       initList(config),
-		focused:    listComponent,
-		input:      NewOptionsInput(&inputConfig),
-		getItems:   config.GetItemsFunc,
-		itemMapper: config.ItemMapper,
-		keys:       config.AdditionalKeymaps,
-		source:     config.Source,
+		list:           initList(config),
+		focused:        listComponent,
+		input:          NewOptionsInput(&inputConfig),
+		getItems:       config.GetItemsFunc,
+		itemMapper:     config.ItemMapper,
+		keys:           config.AdditionalKeymaps,
+		source:         config.Source,
+		delegateGenner: config.Delegate,
+		onChangeAction: config.OnChangeAction,
 	}
+
 }

@@ -39,5 +39,5 @@ func hexToRGB(hex string) (int, int, int) {
 }
 
 func ApplyGradientToFooter(text string) string {
-	return gradientText("REQ", footerNameFGFrom, footerNameFGTo, footerNameStyle, footerNameBGStyle)
+	return gradientText("REQ", AppTheme.FooterNameFGFrom, AppTheme.FooterNameFGTo, footerNameStyle, footerNameBGStyle)
 }
