@@ -77,6 +77,9 @@ func (o OptionsProvider[T, U]) Update(msg tea.Msg) (OptionsProvider[T, U], tea.C
 						}
 					}
 				case key.Matches(msg, o.keys.EditItem):
+					if o.GetSelected().ID == -1 {
+						return o, tea.Batch(cmds...)
+					}
 					o.list.SetSize(o.list.Width(), o.height-lipgloss.Height(o.input.View()))
 					o.input.SetInput(o.GetSelected().Name)
 					o.input.OnFocus(o.GetSelected().ID)
