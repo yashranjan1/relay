@@ -12,7 +12,7 @@ the issue either won't show up in release notes or will show up wrong.
 ## Creating an issue
 
 `gh issue create` does not support GitHub's YAML issue forms
-(`.github/ISSUE_TEMPLATE/feature_request.yaml`) non-interactively. Instead,
+(`.github/ISSUE_TEMPLATE/issue_template.yaml`) non-interactively. Instead,
 write a body file that reproduces the form's rendered structure and pass it
 with `--body-file`.
 
