@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "Relay",
   description: "docs for relay",
+  base: "/relay/",
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
