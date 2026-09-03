@@ -13,6 +13,8 @@ import (
 	"github.com/yashranjan1/relay/internal/log"
 )
 
+const defaultUserAgent = "relay-cli"
+
 func NewHTTPManager() *HTTPManager {
 	client := &http.Client{
 		Timeout: 30 * time.Second,
@@ -87,6 +89,10 @@ func (h *HTTPManager) ExecuteRequest(req *Request) (*Response, error) {
 	if err := h.setHeaders(httpReq, req.Headers); err != nil {
 		log.Error("failed to set headers", "error", err)
 		return nil, fmt.Errorf("failed to set headers: %w", err)
+	}
+
+	if httpReq.Header.Get("User-Agent") == "" {
+		httpReq.Header.Set("User-Agent", defaultUserAgent)
 	}
 
 	resp, err := h.Client.Do(httpReq)

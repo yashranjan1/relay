@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -118,7 +119,7 @@ func TestSetHeaders(t *testing.T) {
 
 	headers := map[string]string{
 		"Content-Type": "application/json",
-		"User-Agent":   "req-cli",
+		"User-Agent":   "relay-cli",
 	}
 
 	err := manager.setHeaders(req, headers)
@@ -128,6 +129,51 @@ func TestSetHeaders(t *testing.T) {
 
 	if req.Header.Get("Content-Type") != "application/json" {
 		t.Error("Content-Type header not set correctly")
+	}
+	if req.Header.Get("User-Agent") != "relay-cli" {
+		t.Errorf("expected User-Agent %q, got %q", "relay-cli", req.Header.Get("User-Agent"))
+	}
+}
+
+func TestExecuteRequestDefaultUserAgent(t *testing.T) {
+	var gotUserAgent string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotUserAgent = r.Header.Get("User-Agent")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	manager := NewHTTPManager()
+	_, err := manager.ExecuteRequest(&Request{Method: "GET", URL: server.URL})
+	if err != nil {
+		t.Fatalf("ExecuteRequest failed: %v", err)
+	}
+
+	if gotUserAgent != defaultUserAgent {
+		t.Errorf("expected default User-Agent %q, got %q", defaultUserAgent, gotUserAgent)
+	}
+}
+
+func TestExecuteRequestCustomUserAgent(t *testing.T) {
+	var gotUserAgent string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotUserAgent = r.Header.Get("User-Agent")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	manager := NewHTTPManager()
+	_, err := manager.ExecuteRequest(&Request{
+		Method:  "GET",
+		URL:     server.URL,
+		Headers: map[string]string{"User-Agent": "custom-agent"},
+	})
+	if err != nil {
+		t.Fatalf("ExecuteRequest failed: %v", err)
+	}
+
+	if gotUserAgent != "custom-agent" {
+		t.Errorf("expected custom User-Agent %q, got %q", "custom-agent", gotUserAgent)
 	}
 }
 
