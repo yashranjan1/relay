@@ -3,7 +3,7 @@ package componenttypes
 import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/maniac-en/req/internal/backend/endpoints"
+	"github.com/yashranjan1/relay/internal/backend/endpoints"
 )
 
 type ReqViewComponent interface {

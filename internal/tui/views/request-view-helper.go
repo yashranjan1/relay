@@ -8,10 +8,10 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	methodpicker "github.com/maniac-en/req/internal/tui/components/MethodPicker"
-	urlinput "github.com/maniac-en/req/internal/tui/components/UrlInput"
-	"github.com/maniac-en/req/internal/tui/keybinds"
-	"github.com/maniac-en/req/internal/tui/styles"
+	methodpicker "github.com/yashranjan1/relay/internal/tui/components/MethodPicker"
+	urlinput "github.com/yashranjan1/relay/internal/tui/components/UrlInput"
+	"github.com/yashranjan1/relay/internal/tui/keybinds"
+	"github.com/yashranjan1/relay/internal/tui/styles"
 )
 
 func createRequestDelegate(active bool) list.ItemDelegate {

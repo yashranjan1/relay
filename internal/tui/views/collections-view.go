@@ -55,12 +55,7 @@ func (c *CollectionsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	case messages.ItemAdded:
 		_, err := c.manager.Create(context.Background(), msg.Item)
 		if err != nil {
-			return c, func() tea.Msg {
-				return messages.ShowError{Message: err.Error()}
-			}
-		}
-		return c, func() tea.Msg {
-			return messages.RefreshItemsList{}
+			// TODO: handle this
 		}
 	case messages.RefreshItemsList:
 		c.list.RefreshItems()

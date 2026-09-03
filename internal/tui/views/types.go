@@ -3,7 +3,7 @@ package views
 import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-	optionsProvider "github.com/maniac-en/req/internal/tui/components/OptionsProvider"
+	optionsProvider "github.com/yashranjan1/relay/internal/tui/components/OptionsProvider"
 )
 
 type ViewInterface interface {

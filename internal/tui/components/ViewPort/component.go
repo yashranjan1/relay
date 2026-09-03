@@ -8,8 +8,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/maniac-en/req/internal/backend/http"
-	"github.com/maniac-en/req/internal/tui/keybinds"
+	"github.com/yashranjan1/relay/internal/backend/http"
+	"github.com/yashranjan1/relay/internal/tui/keybinds"
 )
 
 type Viewport struct {

@@ -4,9 +4,9 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/maniac-en/req/internal/backend/endpoints"
-	componenttypes "github.com/maniac-en/req/internal/tui/components/ComponentTypes"
-	"github.com/maniac-en/req/internal/tui/keybinds"
+	"github.com/yashranjan1/relay/internal/backend/endpoints"
+	componenttypes "github.com/yashranjan1/relay/internal/tui/components/ComponentTypes"
+	"github.com/yashranjan1/relay/internal/tui/keybinds"
 )
 
 type MethodPicker[T any] struct {

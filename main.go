@@ -19,6 +19,7 @@ import (
 	"github.com/yashranjan1/relay/internal/backend/endpoints"
 	"github.com/yashranjan1/relay/internal/backend/history"
 	"github.com/yashranjan1/relay/internal/backend/http"
+	"github.com/yashranjan1/relay/internal/config"
 	"github.com/yashranjan1/relay/internal/log"
 	"github.com/yashranjan1/relay/internal/tui/app"
 )
@@ -63,12 +64,12 @@ func initPaths() error {
 	if err != nil {
 		return fmt.Errorf("error reading user's cache path: %w", err)
 	}
-	APPDIR = filepath.Join(userCacheDir, "req")
+	APPDIR = filepath.Join(userCacheDir, "relay")
 	if err := os.MkdirAll(APPDIR, 0o755); err != nil {
 		return fmt.Errorf("error creating app directory: %w", err)
 	}
 	DBPATH = filepath.Join(APPDIR, "app.db")
-	LOGPATH = filepath.Join(APPDIR, "req.log")
+	LOGPATH = filepath.Join(APPDIR, "relay.log")
 
 	return nil
 }
@@ -128,7 +129,7 @@ func run() error {
 
 	// initialize logging
 	logLevel := slog.LevelInfo
-	if os.Getenv("REQ_DEBUG") == "1" || os.Getenv("REQ_LOG_LEVEL") == "debug" {
+	if os.Getenv("RELAY_DEBUG") == "1" || os.Getenv("RELAY_LOG_LEVEL") == "debug" {
 		logLevel = slog.LevelDebug
 	}
 	log.Initialize(log.Config{
@@ -141,7 +142,7 @@ func run() error {
 		}
 	}()
 
-	log.Info("starting req application")
+	log.Info("starting relay application")
 
 	// run database migrations
 	if err := runMigrations(); err != nil {

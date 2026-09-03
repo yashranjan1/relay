@@ -5,9 +5,9 @@ import (
 	"os"
 	"path"
 
-	"github.com/maniac-en/req/internal/log"
-	"github.com/maniac-en/req/internal/tui/styles"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/yashranjan1/relay/internal/log"
+	"github.com/yashranjan1/relay/internal/tui/styles"
 )
 
 func LoadConfig() error {
@@ -17,7 +17,7 @@ func LoadConfig() error {
 		log.Error("Could not load user config dir")
 		return errors.New("Could not load user config dir")
 	}
-	path := path.Join(configDir, "req", "config.toml")
+	path := path.Join(configDir, "relay", "config.toml")
 
 	byteData, err := os.ReadFile(path)
 	if err != nil {

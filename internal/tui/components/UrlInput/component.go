@@ -5,8 +5,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/maniac-en/req/internal/backend/endpoints"
-	componenttypes "github.com/maniac-en/req/internal/tui/components/ComponentTypes"
+	"github.com/yashranjan1/relay/internal/backend/endpoints"
+	componenttypes "github.com/yashranjan1/relay/internal/tui/components/ComponentTypes"
 )
 
 type UrlInput struct {

@@ -2,7 +2,7 @@ package views
 
 import (
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/maniac-en/req/internal/tui/styles"
+	"github.com/yashranjan1/relay/internal/tui/styles"
 )
 
 func createEndpointsDelegate(active bool) list.ItemDelegate {

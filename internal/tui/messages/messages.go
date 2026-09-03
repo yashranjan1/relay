@@ -1,6 +1,6 @@
 package messages
 
-import "github.com/maniac-en/req/internal/backend/http"
+import "github.com/yashranjan1/relay/internal/backend/http"
 
 type ItemAdded struct {
 	Item string
