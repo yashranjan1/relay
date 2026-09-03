@@ -1,26 +1,39 @@
 name: Issue Template
-description: File a feature request or enhancement
-title: "[Feature]: "
-labels: ["enhancement"]
+description: File a bug report or feature request
+title: "[Issue]: "
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this feature request!
+        Thanks for taking the time to file this issue!
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      options:
+        - Bug
+        - Feature
+    validations:
+      required: true
   - type: textarea
     id: description
     attributes:
-      label: Feature Description
-      description: Describe the feature you would like to see added.
+      label: Description
+      description: >
+        For a bug: what's wrong, where (file/line if known), and how to
+        reproduce it. For a feature: what you'd like added and why.
     validations:
       required: true
   - type: textarea
     id: satisfaction-criteria
     attributes:
       label: Satisfaction Criteria
-      description: What must be true for this feature to be considered done? These will be pulled into release notes when the linked PR merges.
+      description: >
+        A single line stating what will be true once this is done, phrased
+        as a finished patch note (e.g. "Fixed X", "Added Y"). This is pulled
+        directly into release notes when the linked PR merges, so word it
+        for a changelog reader, not as a task checklist.
       placeholder: |
-        - [ ] ...
         - [ ] ...
     validations:
       required: true
@@ -32,5 +45,3 @@ body:
       options:
         - label: I have searched existing issues to make sure this is not a duplicate.
           required: true
-        - label: I am willing to submit a Pull Request for this feature.
-          required: false
