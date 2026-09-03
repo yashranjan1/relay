@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/yashranjan1/relay/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/yashranjan1/relay/actions/workflows/ci-cd.yml)
 
-> **Note:** This project is a fork of [overhttps/req](https://github.com/overhttps/req).
+> [!Important]: This project is a fork of [overhttps/req](https://github.com/overhttps/req).
 > Active development from me is moving here for the foreseeable future.
 
 ## About
