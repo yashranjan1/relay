@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/yashranjan1/relay/internal/backend/endpoints"
 	"github.com/yashranjan1/relay/internal/backend/http"
 	componenttypes "github.com/yashranjan1/relay/internal/tui/components/ComponentTypes"
@@ -104,7 +104,7 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		}
 		r.viewport.SetState(msg.Data)
 		r.loading = false
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
 			if r.responsePage {

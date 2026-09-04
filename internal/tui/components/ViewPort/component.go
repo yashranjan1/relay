@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/yashranjan1/relay/internal/backend/http"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
 )
@@ -43,13 +43,13 @@ func (v Viewport) Update(msg tea.Msg) (Viewport, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		if !v.ready {
-			v.viewport = viewport.New(msg.Width, msg.Height-20)
+			v.viewport = viewport.New(viewport.WithWidth(msg.Width), viewport.WithHeight(msg.Height-20))
 			v.width = msg.Width
 			v.height = msg.Height
 			v.ready = true
 		} else {
-			v.viewport.Width = msg.Width
-			v.viewport.Height = msg.Height - 10
+			v.viewport.SetWidth(msg.Width)
+			v.viewport.SetHeight(msg.Height - 10)
 		}
 	}
 
@@ -67,7 +67,7 @@ func (v *Viewport) View() string {
 	// FIX: this mess
 	str := fmt.Sprintf(" %d%% ", int(v.viewport.ScrollPercent()*100))
 
-	padding := v.height - v.viewport.Height - 7
+	padding := v.height - v.viewport.Height() - 7
 
 	return lipgloss.JoinVertical(lipgloss.Left,
 		v.viewport.View(),
@@ -95,7 +95,7 @@ func (v *Viewport) Help() []key.Binding {
 
 func NewViewport() Viewport {
 	return Viewport{
-		viewport: viewport.New(1, 1),
+		viewport: viewport.New(viewport.WithWidth(1), viewport.WithHeight(1)),
 		ready:    false,
 		state:    "No response received yet :(",
 	}

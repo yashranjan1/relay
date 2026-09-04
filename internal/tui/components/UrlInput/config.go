@@ -1,6 +1,6 @@
 package urlinput
 
-import "github.com/charmbracelet/lipgloss"
+import "charm.land/lipgloss/v2"
 
 type UrlInputConfig struct {
 	StyleGenner func(bool) lipgloss.Style

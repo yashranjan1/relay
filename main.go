@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
 	"github.com/yashranjan1/relay/internal/backend/collections"
@@ -176,7 +176,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("fatal error: %w", err)
 	}
-	program := tea.NewProgram(app.NewAppModel(appContext), tea.WithAltScreen())
+	program := tea.NewProgram(app.NewAppModel(appContext))
 	if _, err = program.Run(); err != nil {
 		return fmt.Errorf("fatal error: %w", err)
 	}

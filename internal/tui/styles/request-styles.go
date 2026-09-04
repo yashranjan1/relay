@@ -1,6 +1,10 @@
 package styles
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"image/color"
+
+	"charm.land/lipgloss/v2"
+)
 
 func RequestLayout(height, width int) func(...string) string {
 	return lipgloss.NewStyle().
@@ -11,17 +15,17 @@ func RequestLayout(height, width int) func(...string) string {
 }
 
 func UrlInputStyle(active bool) lipgloss.Style {
-	var color lipgloss.Color
+	var fg color.Color
 
 	if active {
-		color = AppTheme.Accent
+		fg = AppTheme.Accent
 	}
 
 	return lipgloss.NewStyle().
-		Foreground(color).
+		Foreground(fg).
 		Margin(0, 0, 0, 5).
 		Border(lipgloss.NormalBorder(), false, false, true, false).
-		BorderForeground(color)
+		BorderForeground(fg)
 }
 
 func ResponseStyle(height, width int) func(...string) string {

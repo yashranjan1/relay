@@ -1,9 +1,9 @@
 package methodpicker
 
 import (
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
 	"github.com/yashranjan1/relay/internal/backend/endpoints"
 	componenttypes "github.com/yashranjan1/relay/internal/tui/components/ComponentTypes"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"

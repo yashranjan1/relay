@@ -1,10 +1,10 @@
 package urlinput
 
 import (
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/yashranjan1/relay/internal/backend/endpoints"
 	componenttypes "github.com/yashranjan1/relay/internal/tui/components/ComponentTypes"
 )
@@ -22,11 +22,11 @@ func (u *UrlInput) Init() tea.Cmd {
 }
 
 func (u *UrlInput) SetWidth(width int) {
-	u.text.Width = width
+	u.text.SetWidth(width)
 }
 
 func (u *UrlInput) GetWidth() int {
-	return u.text.Width
+	return u.text.Width()
 }
 
 func (u *UrlInput) Help() []key.Binding {
