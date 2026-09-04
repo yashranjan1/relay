@@ -6,6 +6,9 @@ import (
 
 type Theme struct {
 	FooterNameBG      color.Color
+	Error             color.Color
+	Info              color.Color
+	Warn              color.Color
 	FooterNameFGFrom  color.Color
 	FooterNameFGTo    color.Color
 	Accent            color.Color

@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/yashranjan1/relay/internal/log"
+	toast "github.com/yashranjan1/relay/internal/tui/components/Toast"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
 	"github.com/yashranjan1/relay/internal/tui/messages"
 	"github.com/yashranjan1/relay/internal/tui/styles"
@@ -33,6 +34,7 @@ type AppModel struct {
 	width       int
 	height      int
 	Views       map[ViewName]views.ViewInterface
+	toast       *toast.ToastFeed
 	focusedView ViewName
 	keys        []key.Binding
 	help        help.Model
@@ -102,19 +104,16 @@ func (a AppModel) View() tea.View {
 	view := a.Views[a.focusedView].View()
 	help := a.Help()
 
-	if a.errorMsg != "" {
-		errorBar := styles.ErrorBarStyle.Width(a.width).Render("Error: " + a.errorMsg)
-		s := lipgloss.JoinVertical(lipgloss.Top, header, view, errorBar, help, footer)
-		v := tea.NewView(s)
-		v.AltScreen = true
-		return v
-	}
+	appView := lipgloss.NewLayer(lipgloss.JoinVertical(lipgloss.Top, header, view, help, footer))
 
-	s := lipgloss.JoinVertical(lipgloss.Top, header, view, help, footer)
+	toasts := lipgloss.NewLayer(a.toast.View())
 
-	v := tea.NewView(s)
+	composite := lipgloss.NewCompositor(appView, toasts)
+
+	v := tea.NewView(composite.Render())
 	v.AltScreen = true
 	return v
+
 }
 
 func (a AppModel) Help() string {
@@ -181,11 +180,14 @@ func NewAppModel(ctx *Context) AppModel {
 		keybinds.Keys.Quit,
 	}
 
+	toasts := toast.NewToastFeed()
+
 	model := AppModel{
 		focusedView: Collections,
 		ctx:         ctx,
 		help:        help.New(),
 		keys:        appKeybinds,
+		toast:       toasts,
 	}
 
 	epUpdateFunc := model.ctx.Endpoints.UpdateEndpoint
