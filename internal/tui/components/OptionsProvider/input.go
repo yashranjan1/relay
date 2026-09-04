@@ -1,9 +1,9 @@
 package optionsProvider
 
 import (
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 	"github.com/yashranjan1/relay/internal/tui/messages"
 	"github.com/yashranjan1/relay/internal/tui/styles"
 )
@@ -20,9 +20,13 @@ func NewOptionsInput(config *InputConfig) OptionsInput {
 	input := textinput.New()
 	input.CharLimit = config.CharLimit
 	input.Placeholder = config.Placeholder
-	input.Width = config.Width
-	input.TextStyle = styles.InputStyle
+	input.SetWidth(config.Width)
 	input.Prompt = config.Prompt
+
+	inputStyles := input.Styles()
+	inputStyles.Focused.Text = styles.InputStyle
+	inputStyles.Blurred.Text = styles.InputStyle
+	input.SetStyles(inputStyles)
 
 	return OptionsInput{
 		input:  input,
@@ -39,7 +43,7 @@ func (i OptionsInput) Update(msg tea.Msg) (OptionsInput, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, i.keys.Accept):
 			itemName := i.input.Value()
