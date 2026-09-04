@@ -1,6 +1,6 @@
 package keybinds
 
-import "github.com/charmbracelet/bubbles/key"
+import "charm.land/bubbles/v2/key"
 
 type ListKeyMap struct {
 	CursorUp             key.Binding

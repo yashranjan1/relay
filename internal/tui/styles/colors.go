@@ -1,6 +1,6 @@
 package styles
 
-import "github.com/charmbracelet/lipgloss"
+import "charm.land/lipgloss/v2"
 
 var ThemeMap = map[string]Theme{
 	"default":     DefaultTheme,

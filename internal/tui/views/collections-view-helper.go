@@ -1,7 +1,7 @@
 package views
 
 import (
-	"github.com/charmbracelet/bubbles/list"
+	"charm.land/bubbles/v2/list"
 	optionsProvider "github.com/yashranjan1/relay/internal/tui/components/OptionsProvider"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
 	"github.com/yashranjan1/relay/internal/tui/styles"

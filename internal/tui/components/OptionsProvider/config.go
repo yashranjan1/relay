@@ -3,10 +3,10 @@ package optionsProvider
 import (
 	"context"
 
-	"github.com/charmbracelet/bubbles/key"
+	"charm.land/bubbles/v2/key"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
 )
 

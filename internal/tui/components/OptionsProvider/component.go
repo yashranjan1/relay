@@ -3,10 +3,10 @@ package optionsProvider
 import (
 	"context"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/yashranjan1/relay/internal/log"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
 	"github.com/yashranjan1/relay/internal/tui/messages"
@@ -57,7 +57,7 @@ func (o OptionsProvider[T, U]) Update(msg tea.Msg) (OptionsProvider[T, U], tea.C
 		o.height = msg.Height
 		o.width = msg.Width
 		o.list.SetSize(o.list.Width(), o.height)
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch o.focused {
 		case listComponent:
 			if !o.IsFiltering() {

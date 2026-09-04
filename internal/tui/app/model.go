@@ -4,10 +4,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/yashranjan1/relay/internal/log"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
 	"github.com/yashranjan1/relay/internal/tui/messages"
@@ -82,7 +82,7 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		log.Error("user operation failed", "error", msg.Message)
 		a.errorMsg = msg.Message
 		return a, nil
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		a.errorMsg = ""
 		switch {
 		case key.Matches(msg, keybinds.Keys.Quit):
@@ -96,7 +96,7 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return a, tea.Batch(cmds...)
 }
 
-func (a AppModel) View() string {
+func (a AppModel) View() tea.View {
 	footer := a.Footer()
 	header := a.Header()
 	view := a.Views[a.focusedView].View()
@@ -104,10 +104,17 @@ func (a AppModel) View() string {
 
 	if a.errorMsg != "" {
 		errorBar := styles.ErrorBarStyle.Width(a.width).Render("Error: " + a.errorMsg)
-		return lipgloss.JoinVertical(lipgloss.Top, header, view, errorBar, help, footer)
+		s := lipgloss.JoinVertical(lipgloss.Top, header, view, errorBar, help, footer)
+		v := tea.NewView(s)
+		v.AltScreen = true
+		return v
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Top, header, view, help, footer)
+	s := lipgloss.JoinVertical(lipgloss.Top, header, view, help, footer)
+
+	v := tea.NewView(s)
+	v.AltScreen = true
+	return v
 }
 
 func (a AppModel) Help() string {
