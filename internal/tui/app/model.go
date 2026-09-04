@@ -117,7 +117,7 @@ func (a AppModel) View() tea.View {
 
 	toasts := lipgloss.NewLayer(a.toast.View()).
 		X(a.width - a.toast.GetWidth() - offset).
-		Y(a.height - a.toast.GetHeight() - offset).
+		Y(a.height - a.toast.GetHeight()).
 		Z(1)
 
 	composite := lipgloss.NewCompositor(appView, toasts)

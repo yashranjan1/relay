@@ -50,7 +50,7 @@ func (t *ToastFeed) Update(msg tea.Msg) (*ToastFeed, tea.Cmd) {
 func (t *ToastFeed) View() string {
 	s := ""
 	for _, toast := range t.toasts {
-		s = lipgloss.JoinVertical(lipgloss.Bottom, s, toast.Render())
+		s = lipgloss.JoinVertical(lipgloss.Bottom, s, toast.Render(), "")
 	}
 	return s
 }
@@ -60,7 +60,7 @@ func (t *ToastFeed) GetWidth() int {
 }
 
 func (t *ToastFeed) GetHeight() int {
-	return TOAST_HEIGHT * len(t.toasts)
+	return (TOAST_HEIGHT + 1) * len(t.toasts)
 }
 
 func (t *ToastFeed) OnFocus() {

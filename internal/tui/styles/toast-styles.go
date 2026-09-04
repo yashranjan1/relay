@@ -3,15 +3,19 @@ package styles
 import "charm.land/lipgloss/v2"
 
 func ErrorToast(msg string, width int, height int) string {
-	header := lipgloss.NewStyle().Foreground(AppTheme.Error).Render("󰀦 Error")
-	joined := lipgloss.JoinVertical(lipgloss.Left, header, msg)
+	header := lipgloss.NewStyle().
+		Foreground(AppTheme.Error).
+		Bold(true).
+		Render("󰀦 Error")
+
+	joined := lipgloss.JoinVertical(lipgloss.Left, header, "", msg)
 
 	return lipgloss.
 		NewStyle().
-		PaddingLeft(1).
-		Height(height).
+		Padding(1, 2, 1, 2). // top, right, bottom, left
 		Width(width).
-		Border(lipgloss.NormalBorder(), false, false, false, true).
+		Height(height).
+		Border(lipgloss.ThickBorder(), false, false, false, true).
 		BorderForeground(AppTheme.Error).
 		Background(AppTheme.ToastBG).
 		Render(joined)
@@ -25,7 +29,7 @@ func WarnToast(msg string, width int, height int) string {
 		PaddingLeft(1).
 		Height(height).
 		Width(width).
-		Border(lipgloss.NormalBorder(), false, false, false, true).
+		Border(lipgloss.ThickBorder(), false, false, false, true).
 		BorderForeground(AppTheme.Warn).
 		Background(AppTheme.ToastBG).
 		Render(joined)
@@ -39,7 +43,7 @@ func InfoToast(msg string, width int, height int) string {
 		PaddingLeft(1).
 		Height(height).
 		Width(width).
-		Border(lipgloss.NormalBorder(), false, false, false, true).
+		Border(lipgloss.ThickBorder(), false, false, false, true).
 		BorderForeground(AppTheme.Info).
 		Background(AppTheme.ToastBG).
 		Render(joined)

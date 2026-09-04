@@ -5,8 +5,8 @@ import (
 	"github.com/yashranjan1/relay/internal/tui/styles"
 )
 
-const TOAST_WIDTH = 30
-const TOAST_HEIGHT = 2
+const TOAST_WIDTH = 40
+const TOAST_HEIGHT = 5
 
 type Toast struct {
 	Message string
