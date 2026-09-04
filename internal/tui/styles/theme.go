@@ -13,6 +13,7 @@ type Theme struct {
 	FooterNameFGTo    color.Color
 	Accent            color.Color
 	HeadingForeground color.Color
+	ToastBG           color.Color
 	FooterSegmentBG   color.Color
 	FooterSegmentFG   color.Color
 	HelpFG            color.Color

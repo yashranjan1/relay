@@ -21,6 +21,7 @@ var DefaultTheme = Theme{
 	Error:             lipgloss.Color("#FF5555"),
 	Warn:              lipgloss.Color("#D4BD5D"),
 	Info:              lipgloss.Color("#14578F"),
+	ToastBG:           lipgloss.Color("#000000"),
 }
 
 var LightPaperTheme = Theme{
@@ -35,6 +36,7 @@ var LightPaperTheme = Theme{
 	Error:             lipgloss.Color("#FF5555"),
 	Warn:              lipgloss.Color("#D4BD5D"),
 	Info:              lipgloss.Color("#14578F"),
+	ToastBG:           lipgloss.Color("#000000"),
 }
 
 var ForestTheme = Theme{
@@ -49,6 +51,7 @@ var ForestTheme = Theme{
 	Error:             lipgloss.Color("#FF5555"),
 	Warn:              lipgloss.Color("#D4BD5D"),
 	Info:              lipgloss.Color("#14578F"),
+	ToastBG:           lipgloss.Color("#000000"),
 }
 
 var CyberpunkTheme = Theme{
@@ -63,4 +66,5 @@ var CyberpunkTheme = Theme{
 	Error:             lipgloss.Color("#FF5555"),
 	Warn:              lipgloss.Color("#D4BD5D"),
 	Info:              lipgloss.Color("#14578F"),
+	ToastBG:           lipgloss.Color("#000000"),
 }

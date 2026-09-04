@@ -51,8 +51,15 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case messages.DeleteItem:
 		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
+		cmds = append(cmds, cmd)
 	case messages.ItemAdded:
 		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
+		cmds = append(cmds, cmd)
+	case messages.RemoveToast:
+		a.toast.RemoveToast(msg.ID)
+	case messages.AddToast:
+		cmd = a.toast.AddToast(msg.Type, msg.Message)
+		cmds = append(cmds, cmd)
 	case tea.WindowSizeMsg:
 		a.height = msg.Height
 		a.width = msg.Width
@@ -106,7 +113,12 @@ func (a AppModel) View() tea.View {
 
 	appView := lipgloss.NewLayer(lipgloss.JoinVertical(lipgloss.Top, header, view, help, footer))
 
-	toasts := lipgloss.NewLayer(a.toast.View())
+	offset := 1
+
+	toasts := lipgloss.NewLayer(a.toast.View()).
+		X(a.width - a.toast.GetWidth() - offset).
+		Y(a.height - a.toast.GetHeight() - offset).
+		Z(1)
 
 	composite := lipgloss.NewCompositor(appView, toasts)
 
