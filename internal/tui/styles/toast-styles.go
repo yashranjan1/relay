@@ -4,6 +4,7 @@ import "charm.land/lipgloss/v2"
 
 func ErrorToast(msg string, width int, height int) string {
 	header := lipgloss.NewStyle().
+		Width(width).
 		Foreground(AppTheme.Error).
 		Bold(true).
 		Render("󰀦 Error")
@@ -22,7 +23,10 @@ func ErrorToast(msg string, width int, height int) string {
 }
 
 func WarnToast(msg string, width int, height int) string {
-	header := lipgloss.NewStyle().Foreground(AppTheme.Warn).Render("󰀦 Warn")
+	header := lipgloss.NewStyle().
+		Foreground(AppTheme.Warn).
+		Width(width).
+		Render("󰀦 Warn")
 	joined := lipgloss.JoinVertical(lipgloss.Left, header, msg)
 
 	return lipgloss.NewStyle().
@@ -36,7 +40,10 @@ func WarnToast(msg string, width int, height int) string {
 }
 
 func InfoToast(msg string, width int, height int) string {
-	header := lipgloss.NewStyle().Foreground(AppTheme.Info).Render(" Info")
+	header := lipgloss.NewStyle().
+		Foreground(AppTheme.Info).
+		Width(width).
+		Render(" Info")
 	joined := lipgloss.JoinVertical(lipgloss.Left, header, msg)
 
 	return lipgloss.NewStyle().

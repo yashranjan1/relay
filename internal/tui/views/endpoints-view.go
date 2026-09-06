@@ -15,15 +15,8 @@ import (
 	"github.com/yashranjan1/relay/internal/tui/messages"
 )
 
-type epFocused string
-
-const (
-	listView = "listview"
-)
-
 type EndpointsView struct {
 	height     int
-	focused    epFocused
 	collection optionsProvider.Option
 	width      int
 	order      int
@@ -73,10 +66,29 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	case messages.RefreshItemsList:
 		e.list.RefreshItems()
 	case messages.ItemEdited:
-		e.manager.UpdateEndpointName(context.Background(), msg.ItemID, msg.Item)
-	case messages.DeleteItem:
-		e.manager.Delete(context.Background(), msg.ItemID)
+		_, err := e.manager.UpdateEndpointName(context.Background(), msg.ItemID, msg.Item)
 		e.list.RefreshItems()
+		if err != nil {
+			cmd = func() tea.Msg {
+				return messages.AddToast{
+					Type:    messages.Error,
+					Message: "Endpoint update failed",
+				}
+			}
+			cmds = append(cmds, cmd)
+		}
+	case messages.DeleteItem:
+		err := e.manager.Delete(context.Background(), msg.ItemID)
+		e.list.RefreshItems()
+		if err != nil {
+			cmd = func() tea.Msg {
+				return messages.AddToast{
+					Type:    messages.Error,
+					Message: "Endpoint delete failed",
+				}
+			}
+			cmds = append(cmds, cmd)
+		}
 	case messages.ChooseItem[optionsProvider.Option]:
 		e.list.OnBlur()
 		return e, func() tea.Msg {
@@ -93,29 +105,20 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		if msg.Target != Endpoints {
 			break
 		}
-		// FIX: idek
-		// e.requestView.OnBlur()
-		e.focused = listView
 
 	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
-			if e.focused == listView {
-				// e.requestView.SetState(endpoints.EndpointEntity{})
-				return e, func() tea.Msg {
-					return messages.NavigateToView{
-						ViewName: Collections,
-						Target:   MainModel,
-					}
+			return e, func() tea.Msg {
+				return messages.NavigateToView{
+					ViewName: Collections,
+					Target:   MainModel,
 				}
 			}
 		}
 	}
 
-	switch e.focused {
-	case listView:
-		e.list, cmd = e.list.Update(msg)
-	}
+	e.list, cmd = e.list.Update(msg)
 
 	cmds = append(cmds, cmd)
 
@@ -191,7 +194,6 @@ func NewEndpointsView(epManager *endpoints.EndpointsManager, order int) *Endpoin
 	config.Placeholder = "Add a new endpoint..."
 
 	view.list = optionsProvider.NewOptionsProvider(config)
-	view.focused = listView
 
 	return view
 }

@@ -54,7 +54,7 @@ func (c *CollectionsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case messages.ItemAdded:
 		_, err := c.manager.Create(context.Background(), msg.Item)
-		if err == nil {
+		if err != nil {
 			cmd = func() tea.Msg {
 				return messages.AddToast{
 					Type:    messages.Error,
@@ -68,9 +68,27 @@ func (c *CollectionsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		c.list.RefreshItems()
 		return c, nil
 	case messages.ItemEdited:
-		c.manager.Update(context.Background(), msg.ItemID, msg.Item)
+		_, err := c.manager.Update(context.Background(), msg.ItemID, msg.Item)
+		if err != nil {
+			cmd = func() tea.Msg {
+				return messages.AddToast{
+					Type:    messages.Error,
+					Message: "Collection update failed",
+				}
+			}
+			cmds = append(cmds, cmd)
+		}
 	case messages.DeleteItem:
-		c.manager.Delete(context.Background(), msg.ItemID)
+		err := c.manager.Delete(context.Background(), msg.ItemID)
+		if err != nil {
+			cmd = func() tea.Msg {
+				return messages.AddToast{
+					Type:    messages.Error,
+					Message: "Collection delete failed",
+				}
+			}
+			cmds = append(cmds, cmd)
+		}
 		c.list.RefreshItems()
 	case messages.ChooseItem[optionsProvider.Option]:
 		c.list.OnBlur()
