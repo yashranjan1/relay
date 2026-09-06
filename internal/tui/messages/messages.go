@@ -2,9 +2,27 @@ package messages
 
 import "github.com/yashranjan1/relay/internal/backend/http"
 
+type ToastType int
+
+const (
+	Error ToastType = iota
+	Info
+	Warning
+)
+
 type ItemAdded struct {
 	Item string
 }
+
+type RemoveToast struct {
+	ID int
+}
+
+type AddToast struct {
+	Type    ToastType
+	Message string
+}
+
 type ItemEdited struct {
 	Item   string
 	ItemID int64
@@ -24,7 +42,7 @@ type DeactivateView struct{}
 type NavigateToView struct {
 	ViewName string
 	Target   string
-	Data     interface{}
+	Data     any
 }
 
 type Response struct {
@@ -33,7 +51,3 @@ type Response struct {
 }
 
 type RefreshItemsList struct{}
-
-type ShowError struct {
-	Message string
-}

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/yashranjan1/relay/internal/log"
+	toast "github.com/yashranjan1/relay/internal/tui/components/Toast"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
 	"github.com/yashranjan1/relay/internal/tui/messages"
 	"github.com/yashranjan1/relay/internal/tui/styles"
@@ -33,6 +35,7 @@ type AppModel struct {
 	width       int
 	height      int
 	Views       map[ViewName]views.ViewInterface
+	toast       *toast.ToastFeed
 	focusedView ViewName
 	keys        []key.Binding
 	help        help.Model
@@ -49,8 +52,15 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case messages.DeleteItem:
 		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
+		cmds = append(cmds, cmd)
 	case messages.ItemAdded:
 		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
+		cmds = append(cmds, cmd)
+	case messages.RemoveToast:
+		a.toast.RemoveToast(msg.ID)
+	case messages.AddToast:
+		cmd = a.toast.AddToast(msg.Type, msg.Message)
+		cmds = append(cmds, cmd)
 	case tea.WindowSizeMsg:
 		a.height = msg.Height
 		a.width = msg.Width
@@ -64,7 +74,13 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			err := a.Views[ViewName(msg.ViewName)].SetState(msg.Data)
 			if err != nil {
 				log.Error("failed to set view state during navigation", "target_view", msg.ViewName, "error", err)
-				return a, nil
+				errorMsg := func() tea.Msg {
+					return messages.AddToast{
+						Type:    messages.Error,
+						Message: fmt.Sprint("failed to set view state during navigation", "target_view", msg.ViewName, "error", err),
+					}
+				}
+				return a, errorMsg
 			}
 		} else if msg.Target != views.MainModel {
 			break
@@ -78,10 +94,6 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return a, tea.Batch(cmds...)
 
-	case messages.ShowError:
-		log.Error("user operation failed", "error", msg.Message)
-		a.errorMsg = msg.Message
-		return a, nil
 	case tea.KeyPressMsg:
 		a.errorMsg = ""
 		switch {
@@ -102,19 +114,21 @@ func (a AppModel) View() tea.View {
 	view := a.Views[a.focusedView].View()
 	help := a.Help()
 
-	if a.errorMsg != "" {
-		errorBar := styles.ErrorBarStyle.Width(a.width).Render("Error: " + a.errorMsg)
-		s := lipgloss.JoinVertical(lipgloss.Top, header, view, errorBar, help, footer)
-		v := tea.NewView(s)
-		v.AltScreen = true
-		return v
-	}
+	appView := lipgloss.NewLayer(lipgloss.JoinVertical(lipgloss.Top, header, view, help, footer))
 
-	s := lipgloss.JoinVertical(lipgloss.Top, header, view, help, footer)
+	offset := 1
 
-	v := tea.NewView(s)
+	toasts := lipgloss.NewLayer(a.toast.View()).
+		X(a.width - a.toast.GetWidth() - offset).
+		Y(a.height - a.toast.GetHeight()).
+		Z(1)
+
+	composite := lipgloss.NewCompositor(appView, toasts)
+
+	v := tea.NewView(composite.Render())
 	v.AltScreen = true
 	return v
+
 }
 
 func (a AppModel) Help() string {
@@ -181,11 +195,14 @@ func NewAppModel(ctx *Context) AppModel {
 		keybinds.Keys.Quit,
 	}
 
+	toasts := toast.NewToastFeed()
+
 	model := AppModel{
 		focusedView: Collections,
 		ctx:         ctx,
 		help:        help.New(),
 		keys:        appKeybinds,
+		toast:       toasts,
 	}
 
 	epUpdateFunc := model.ctx.Endpoints.UpdateEndpoint
