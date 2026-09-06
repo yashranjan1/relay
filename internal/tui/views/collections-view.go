@@ -54,8 +54,15 @@ func (c *CollectionsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case messages.ItemAdded:
 		_, err := c.manager.Create(context.Background(), msg.Item)
-		if err != nil {
-			// TODO: handle this
+		if err == nil {
+			cmd = func() tea.Msg {
+				return messages.AddToast{
+					Type:    messages.Error,
+					Message: "Can't create collection",
+				}
+			}
+			cmds = append(cmds, cmd)
+			return c, tea.Batch(cmds...)
 		}
 	case messages.RefreshItemsList:
 		c.list.RefreshItems()

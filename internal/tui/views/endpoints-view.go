@@ -63,7 +63,12 @@ func (e *EndpointsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 			Method:       "GET",
 		})
 		if err != nil {
-			//TODO: handle this
+			return e, func() tea.Msg {
+				return messages.AddToast{
+					Type:    messages.Error,
+					Message: "Failed to create endpoint",
+				}
+			}
 		}
 	case messages.RefreshItemsList:
 		e.list.RefreshItems()

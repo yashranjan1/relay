@@ -51,7 +51,3 @@ type Response struct {
 }
 
 type RefreshItemsList struct{}
-
-type ShowError struct {
-	Message string
-}

@@ -13,6 +13,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/yashranjan1/relay/internal/backend/endpoints"
 	"github.com/yashranjan1/relay/internal/backend/http"
+	"github.com/yashranjan1/relay/internal/log"
 	componenttypes "github.com/yashranjan1/relay/internal/tui/components/ComponentTypes"
 	methodpicker "github.com/yashranjan1/relay/internal/tui/components/MethodPicker"
 	optionsProvider "github.com/yashranjan1/relay/internal/tui/components/OptionsProvider"
@@ -100,7 +101,12 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		})
 	case messages.Response:
 		if msg.Err != nil {
-			// TODO: do something here idek
+			log.Error(msg.Err.Error())
+			return r, func() tea.Msg {
+				return messages.AddToast{
+					Message: "Failed to get response",
+				}
+			}
 		}
 		r.viewport.SetState(msg.Data)
 		r.loading = false
@@ -227,7 +233,8 @@ func (r *RequestView) SetState(items ...any) error {
 			ep, err := r.epManager.Read(context.Background(), data.EndpointID)
 			r.collection = data.Collection
 			if err != nil {
-				// FIX: do something over here
+				log.Error(err.Error())
+				return err
 			}
 			r.endpoint = ep
 			for _, val := range componentList {

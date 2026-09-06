@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -73,7 +74,13 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			err := a.Views[ViewName(msg.ViewName)].SetState(msg.Data)
 			if err != nil {
 				log.Error("failed to set view state during navigation", "target_view", msg.ViewName, "error", err)
-				return a, nil
+				errorMsg := func() tea.Msg {
+					return messages.AddToast{
+						Type:    messages.Error,
+						Message: fmt.Sprint("failed to set view state during navigation", "target_view", msg.ViewName, "error", err),
+					}
+				}
+				return a, errorMsg
 			}
 		} else if msg.Target != views.MainModel {
 			break
@@ -87,10 +94,6 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return a, tea.Batch(cmds...)
 
-	case messages.ShowError:
-		log.Error("user operation failed", "error", msg.Message)
-		a.errorMsg = msg.Message
-		return a, nil
 	case tea.KeyPressMsg:
 		a.errorMsg = ""
 		switch {

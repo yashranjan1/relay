@@ -119,7 +119,12 @@ func (o OptionsProvider[T, U]) Update(msg tea.Msg) (OptionsProvider[T, U], tea.C
 func (o *OptionsProvider[T, U]) UpdateState() tea.Cmd {
 	rawItems, err := o.getItems(context.Background())
 	if err != nil {
-		// FIX: add err handling
+		return func() tea.Msg {
+			return messages.AddToast{
+				Type:    messages.Error,
+				Message: "Failed to fetch options",
+			}
+		}
 	}
 
 	items := o.itemMapper(rawItems)
