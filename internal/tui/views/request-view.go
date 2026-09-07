@@ -29,31 +29,31 @@ type reqFocused string
 const (
 	methodPicker = "method"
 	urlInput     = "input"
+	responseView = "responseView"
 )
 
 var componentList = []reqFocused{
 	methodPicker,
 	urlInput,
+	responseView,
 }
 
 type RequestView struct {
-	width        int
-	focused      reqFocused
-	viewport     viewport.Viewport
-	components   map[reqFocused]componenttypes.ReqViewComponent
-	index        int
-	epManager    *endpoints.EndpointsManager
-	height       int
-	loading      bool
-	help         help.Model
-	keys         *keybinds.ListKeyMap
-	spinner      spinner.Model
-	responsePage bool
-	client       *http.HTTPManager
-	order        int
-	update       func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error)
-	endpoint     endpoints.EndpointEntity
-	collection   optionsProvider.Option
+	width      int
+	focused    reqFocused
+	components map[reqFocused]componenttypes.FocusableComponent
+	index      int
+	epManager  *endpoints.EndpointsManager
+	height     int
+	loading    bool
+	help       help.Model
+	keys       *keybinds.ListKeyMap
+	spinner    spinner.Model
+	client     *http.HTTPManager
+	order      int
+	update     func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error)
+	endpoint   endpoints.EndpointEntity
+	collection optionsProvider.Option
 }
 
 func (r *RequestView) Init() tea.Cmd {
@@ -66,19 +66,16 @@ func (r *RequestView) Name() string {
 
 func (r *RequestView) Help() []key.Binding {
 	var reqViewBinds []key.Binding
-	if r.responsePage {
-		reqViewBinds = r.viewport.Help()
-	} else {
-		binds := r.components[r.focused].Help()
-		reqViewBinds = []key.Binding{
-			keybinds.Keys.Prev,
-			keybinds.Keys.Next,
-			keybinds.Keys.Save,
-			keybinds.Keys.SendRequest,
-		}
-		reqViewBinds = append(binds, reqViewBinds...)
+
+	binds := r.components[r.focused].Help()
+	reqViewBinds = []key.Binding{
+		keybinds.Keys.Prev,
+		keybinds.Keys.Next,
+		keybinds.Keys.Save,
+		keybinds.Keys.SendRequest,
 	}
-	// FIX: should append responsePage binds when necessary
+	reqViewBinds = append(binds, reqViewBinds...)
+
 	return reqViewBinds
 }
 
@@ -93,11 +90,13 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		r.height = msg.Height
 		r.width = msg.Width
-		w := r.components[urlInput].GetWidth()
-		r.components[urlInput].SetWidth(r.width - (w + 30))
-		r.viewport, cmd = r.viewport.Update(tea.WindowSizeMsg{
-			Height: msg.Height,
-			Width:  r.width - 4,
+		w := r.components[methodPicker].GetWidth()
+		r.components[urlInput].SetWidth(r.width - w)
+
+		topMenu := 4
+		r.components[responseView], cmd = r.components[responseView].Update(tea.WindowSizeMsg{
+			Height: msg.Height - topMenu,
+			Width:  r.width - topMenu,
 		})
 	case messages.Response:
 		if msg.Err != nil {
@@ -108,15 +107,14 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 				}
 			}
 		}
-		r.viewport.SetState(msg.Data)
+		if settable, ok := r.components[responseView].(componenttypes.ResponseSettable); ok {
+			settable.SetState(msg.Data)
+		}
+		r.shiftFocusTo(responseView)
 		r.loading = false
 	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
-			if r.responsePage {
-				r.responsePage = false
-				return r, nil
-			}
 			return r, func() tea.Msg {
 				return messages.NavigateToView{
 					ViewName: Endpoints,
@@ -134,11 +132,11 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 				return messages.RefreshItemsList{}
 			}
 		case key.Matches(msg, keybinds.Keys.SendRequest):
+			r.Save()
 			request := &http.Request{
 				Method: r.endpoint.Method,
 				URL:    r.endpoint.Url,
 			}
-			r.responsePage = true
 			r.loading = true
 			sendMsg := func() tea.Msg {
 				res, err := r.client.ExecuteRequest(request)
@@ -153,25 +151,11 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 			}
 			return r, tea.Batch(r.spinner.Tick, sendMsg)
 		case key.Matches(msg, keybinds.Keys.Save):
-			for _, val := range r.components {
-				r.endpoint = val.UpdateState(r.endpoint)
-			}
-			r.update(
-				context.Background(),
-				r.endpoint.GetID(),
-				endpoints.EndpointData{
-					Name:   r.endpoint.Name,
-					Method: r.endpoint.Method,
-					URL:    r.endpoint.Url,
-				})
+			r.Save()
 		}
 	}
 
-	if !r.responsePage {
-		r.components[r.focused], cmd = r.components[r.focused].Update(msg)
-	} else {
-		r.viewport, cmd = r.viewport.Update(msg)
-	}
+	r.components[r.focused], cmd = r.components[r.focused].Update(msg)
 
 	cmds = append(cmds, cmd)
 
@@ -183,16 +167,12 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	return r, tea.Batch(cmds...)
 }
 
-func (r *RequestView) shift(next bool) {
-	if next {
-		r.index = (r.index + 1) % len(componentList)
-	} else {
-		r.index = (r.index - 1 + len(componentList)) % len(componentList)
+func (r *RequestView) Save() {
+	for _, val := range r.components {
+		if bindable, ok := val.(componenttypes.EndpointBindable); ok {
+			r.endpoint = bindable.UpdateState(r.endpoint)
+		}
 	}
-	r.endpoint = r.components[r.focused].UpdateState(r.endpoint)
-	r.components[r.focused].OnBlur()
-	r.focused = componentList[r.index]
-	r.components[r.focused].OnFocus()
 	r.update(
 		context.Background(),
 		r.endpoint.GetID(),
@@ -200,31 +180,48 @@ func (r *RequestView) shift(next bool) {
 			Name:   r.endpoint.Name,
 			Method: r.endpoint.Method,
 			URL:    r.endpoint.Url,
-		})
+		},
+	)
+}
+
+func (r *RequestView) shiftFocusTo(pane reqFocused) {
+	r.components[r.focused].OnBlur()
+	r.focused = pane
+	r.components[r.focused].OnFocus()
+}
+
+func (r *RequestView) shift(next bool) {
+	if next {
+		r.index = (r.index + 1) % len(componentList)
+	} else {
+		r.index = (r.index - 1 + len(componentList)) % len(componentList)
+	}
+	if bindable, ok := r.components[r.focused].(componenttypes.EndpointBindable); ok {
+		r.endpoint = bindable.UpdateState(r.endpoint)
+	}
+	r.shiftFocusTo(componentList[r.index])
+	r.Save()
 }
 
 func (r *RequestView) View() string {
-	if r.responsePage {
-		if r.loading {
-			loadingString := fmt.Sprintf("%s Loading...", r.spinner.View())
-			return styles.RequestLayout(r.height, r.width)(lipgloss.Place(r.width, r.height-1, lipgloss.Center, lipgloss.Center, loadingString))
-		}
-		view := styles.ResponseStyle(r.height, r.width)(r.viewport.View())
-		return view
-	} else {
-		if r.endpoint.Name == "" {
-			return styles.RequestLayout(r.height, r.width)("No Endpoint selected")
-		}
-		views := []string{}
-		for _, val := range componentList {
-			views = append(views, r.components[val].View())
-		}
-		view := lipgloss.JoinHorizontal(
-			lipgloss.Left,
-			views...,
-		)
-		return styles.RequestLayout(r.height, r.width)(view)
+	if r.endpoint.Name == "" {
+		return styles.RequestLayout(r.height, r.width)("No Endpoint selected")
 	}
+	topMenu := lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		r.components[methodPicker].View(),
+		r.components[urlInput].View(),
+	)
+	botMenu := lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		r.components[responseView].View(),
+	)
+	view := lipgloss.JoinVertical(
+		lipgloss.Left,
+		topMenu,
+		botMenu,
+	)
+	return styles.RequestLayout(r.height, r.width)(view)
 }
 
 func (r *RequestView) SetState(items ...any) error {
@@ -238,7 +235,12 @@ func (r *RequestView) SetState(items ...any) error {
 			}
 			r.endpoint = ep
 			for _, val := range componentList {
-				r.components[val].SetState(ep)
+				if bindable, ok := r.components[val].(componenttypes.EndpointBindable); ok {
+					bindable.SetState(ep)
+				}
+			}
+			if settable, ok := r.components[responseView].(componenttypes.ResponseSettable); ok {
+				settable.EraseState()
 			}
 			return nil
 		}
@@ -285,18 +287,17 @@ func NewRequestView(cfg RequestViewConfig) *RequestView {
 	s.Spinner = spinner.Dot
 
 	return &RequestView{
-		components: map[reqFocused]componenttypes.ReqViewComponent{
+		components: map[reqFocused]componenttypes.FocusableComponent{
 			methodPicker: methodpicker.NewMethodPicker(mpConfig),
 			urlInput:     urlinput.NewUrlInput(uiConfig),
+			responseView: viewport.NewViewport(),
 		},
 
-		epManager:    cfg.EpManager,
-		focused:      methodPicker,
-		viewport:     viewport.NewViewport(),
-		order:        cfg.Order,
-		update:       cfg.Update,
-		client:       cfg.Client,
-		responsePage: false,
-		spinner:      s,
+		epManager: cfg.EpManager,
+		focused:   methodPicker,
+		order:     cfg.Order,
+		update:    cfg.Update,
+		client:    cfg.Client,
+		spinner:   s,
 	}
 }

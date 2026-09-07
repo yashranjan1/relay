@@ -64,7 +64,7 @@ func (m *MethodPicker[T]) findIndex(method string) int {
 	return -1
 }
 
-func (m *MethodPicker[T]) Update(msg tea.Msg) (componenttypes.ReqViewComponent, tea.Cmd) {
+func (m *MethodPicker[T]) Update(msg tea.Msg) (componenttypes.FocusableComponent, tea.Cmd) {
 	var cmd tea.Cmd
 
 	m.list, cmd = m.list.Update(msg)
