@@ -9,6 +9,7 @@ type Theme struct {
 	Error             color.Color
 	Info              color.Color
 	Warn              color.Color
+	Success           color.Color
 	FooterNameFGFrom  color.Color
 	FooterNameFGTo    color.Color
 	Accent            color.Color

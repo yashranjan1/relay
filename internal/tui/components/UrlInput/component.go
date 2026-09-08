@@ -42,7 +42,7 @@ func (u *UrlInput) UpdateState(ep endpoints.EndpointEntity) endpoints.EndpointEn
 	return ep
 }
 
-func (u *UrlInput) Update(msg tea.Msg) (componenttypes.ReqViewComponent, tea.Cmd) {
+func (u *UrlInput) Update(msg tea.Msg) (componenttypes.FocusableComponent, tea.Cmd) {
 	var cmd tea.Cmd
 
 	u.text, cmd = u.text.Update(msg)
