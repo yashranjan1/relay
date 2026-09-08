@@ -121,13 +121,8 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 					Target:   MainModel,
 				}
 			}
-		case key.Matches(msg, keybinds.Keys.Next):
-			r.shift(true)
-			return r, func() tea.Msg {
-				return messages.RefreshItemsList{}
-			}
-		case key.Matches(msg, keybinds.Keys.Prev):
-			r.shift(false)
+		case key.Matches(msg, keybinds.Keys.Next) || key.Matches(msg, keybinds.Keys.Prev) || key.Matches(msg, keybinds.Keys.Over) || key.Matches(msg, keybinds.Keys.Under):
+			r.shift(msg)
 			return r, func() tea.Msg {
 				return messages.RefreshItemsList{}
 			}
@@ -190,14 +185,18 @@ func (r *RequestView) shiftFocusTo(pane reqFocused) {
 	r.components[r.focused].OnFocus()
 }
 
-func (r *RequestView) shift(next bool) {
-	if next {
+func (r *RequestView) shift(msg tea.KeyPressMsg) {
+	switch {
+	case key.Matches(msg, keybinds.Keys.Next):
 		r.index = (r.index + 1) % len(componentList)
-	} else {
+	case key.Matches(msg, keybinds.Keys.Prev):
 		r.index = (r.index - 1 + len(componentList)) % len(componentList)
-	}
-	if bindable, ok := r.components[r.focused].(componenttypes.EndpointBindable); ok {
-		r.endpoint = bindable.UpdateState(r.endpoint)
+	// INFO: bit stupid rn but will be cool when we have the request view
+	case key.Matches(msg, keybinds.Keys.Under):
+		r.index = (r.index + 2) % len(componentList)
+	case key.Matches(msg, keybinds.Keys.Over):
+		r.index = (r.index - 2 + len(componentList)) % len(componentList)
+	default:
 	}
 	r.shiftFocusTo(componentList[r.index])
 	r.Save()

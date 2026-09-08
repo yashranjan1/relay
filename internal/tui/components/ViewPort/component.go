@@ -126,10 +126,11 @@ func (v *Viewport) OnBlur() {
 }
 
 func (v *Viewport) Help() []key.Binding {
-	// FIX: this
 	return []key.Binding{
 		keybinds.Keys.Down,
 		keybinds.Keys.Up,
+		keybinds.Keys.PageDown,
+		keybinds.Keys.PageUp,
 	}
 }
 
