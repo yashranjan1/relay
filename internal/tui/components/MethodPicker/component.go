@@ -1,9 +1,9 @@
 package methodpicker
 
 import (
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
 	"github.com/yashranjan1/relay/internal/backend/endpoints"
 	componenttypes "github.com/yashranjan1/relay/internal/tui/components/ComponentTypes"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
@@ -64,7 +64,7 @@ func (m *MethodPicker[T]) findIndex(method string) int {
 	return -1
 }
 
-func (m *MethodPicker[T]) Update(msg tea.Msg) (componenttypes.ReqViewComponent, tea.Cmd) {
+func (m *MethodPicker[T]) Update(msg tea.Msg) (componenttypes.FocusableComponent, tea.Cmd) {
 	var cmd tea.Cmd
 
 	m.list, cmd = m.list.Update(msg)

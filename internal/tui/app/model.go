@@ -1,14 +1,18 @@
 package app
 
 import (
+	"fmt"
 	"sort"
 	"strings"
+	"time"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/yashranjan1/relay/internal/log"
+	loader "github.com/yashranjan1/relay/internal/tui/components/Loader"
+	toast "github.com/yashranjan1/relay/internal/tui/components/Toast"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
 	"github.com/yashranjan1/relay/internal/tui/messages"
 	"github.com/yashranjan1/relay/internal/tui/styles"
@@ -33,10 +37,13 @@ type AppModel struct {
 	width       int
 	height      int
 	Views       map[ViewName]views.ViewInterface
+	toast       *toast.ToastFeed
 	focusedView ViewName
 	keys        []key.Binding
 	help        help.Model
 	errorMsg    string
+	loading     bool
+	loader      *loader.Loader
 }
 
 func (a AppModel) Init() tea.Cmd {
@@ -49,8 +56,27 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case messages.DeleteItem:
 		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
+		cmds = append(cmds, cmd)
 	case messages.ItemAdded:
 		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
+		cmds = append(cmds, cmd)
+	case messages.StartLoader:
+		a.loading = true
+		a.loader.SetMessage(msg.Message)
+		cmd = a.loader.Tick()
+		cmds = append(cmds, cmd)
+	case messages.Response:
+		a.loading = false
+	case messages.RemoveToast:
+		a.toast.RemoveToast(msg.ID)
+	case messages.AddToast:
+		cmd = a.toast.AddToast(msg.Type, msg.Message)
+		cmds = append(cmds, cmd)
+	case loader.TickMsg:
+		if a.loading {
+			cmd = a.loader.Update(msg)
+			cmds = append(cmds, cmd)
+		}
 	case tea.WindowSizeMsg:
 		a.height = msg.Height
 		a.width = msg.Width
@@ -64,7 +90,13 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			err := a.Views[ViewName(msg.ViewName)].SetState(msg.Data)
 			if err != nil {
 				log.Error("failed to set view state during navigation", "target_view", msg.ViewName, "error", err)
-				return a, nil
+				errorMsg := func() tea.Msg {
+					return messages.AddToast{
+						Type:    messages.Error,
+						Message: fmt.Sprint("failed to set view state during navigation", "target_view", msg.ViewName, "error", err),
+					}
+				}
+				return a, errorMsg
 			}
 		} else if msg.Target != views.MainModel {
 			break
@@ -76,13 +108,12 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = a.Views[a.focusedView].OnFocus()
 		cmds = append(cmds, cmd)
 
+		if a.loading {
+		}
+
 		return a, tea.Batch(cmds...)
 
-	case messages.ShowError:
-		log.Error("user operation failed", "error", msg.Message)
-		a.errorMsg = msg.Message
-		return a, nil
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		a.errorMsg = ""
 		switch {
 		case key.Matches(msg, keybinds.Keys.Quit):
@@ -96,18 +127,27 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return a, tea.Batch(cmds...)
 }
 
-func (a AppModel) View() string {
+func (a AppModel) View() tea.View {
 	footer := a.Footer()
 	header := a.Header()
 	view := a.Views[a.focusedView].View()
 	help := a.Help()
 
-	if a.errorMsg != "" {
-		errorBar := styles.ErrorBarStyle.Width(a.width).Render("Error: " + a.errorMsg)
-		return lipgloss.JoinVertical(lipgloss.Top, header, view, errorBar, help, footer)
-	}
+	appView := lipgloss.NewLayer(lipgloss.JoinVertical(lipgloss.Top, header, view, help, footer))
 
-	return lipgloss.JoinVertical(lipgloss.Top, header, view, help, footer)
+	offset := 1
+
+	toasts := lipgloss.NewLayer(a.toast.View()).
+		X(a.width - a.toast.GetWidth() - offset).
+		Y(a.height - a.toast.GetHeight()).
+		Z(1)
+
+	composite := lipgloss.NewCompositor(appView, toasts)
+
+	v := tea.NewView(composite.Render())
+	v.AltScreen = true
+	return v
+
 }
 
 func (a AppModel) Help() string {
@@ -163,10 +203,21 @@ func (a AppModel) Header() string {
 }
 
 func (a AppModel) Footer() string {
-	name := styles.ApplyGradientToFooter("REQ")
+	name := styles.ApplyGradientToFooter("RELAY")
 	footerText := styles.FooterSegmentStyle.Render(a.Views[a.focusedView].GetFooterSegment())
-	version := styles.FooterVersionStyle.Width(a.width - lipgloss.Width(name) - lipgloss.Width(footerText)).Render(a.ctx.Version)
-	return lipgloss.JoinHorizontal(lipgloss.Left, name, footerText, version)
+	version := styles.FooterVersionStyle.Render(a.ctx.Version)
+
+	var loader string
+	residualWidth := a.width - (lipgloss.Width(name) + lipgloss.Width(footerText) + lipgloss.Width(version))
+	style := styles.LoaderStyle.Width(residualWidth)
+
+	if a.loading {
+		loader = style.Render(a.loader.View())
+	} else {
+		loader = style.Render("")
+	}
+
+	return lipgloss.JoinHorizontal(lipgloss.Left, name, footerText, loader, version)
 }
 
 func NewAppModel(ctx *Context) AppModel {
@@ -174,11 +225,16 @@ func NewAppModel(ctx *Context) AppModel {
 		keybinds.Keys.Quit,
 	}
 
+	toasts := toast.NewToastFeed()
+
 	model := AppModel{
 		focusedView: Collections,
 		ctx:         ctx,
 		help:        help.New(),
 		keys:        appKeybinds,
+		loader:      loader.NewLoader(50*time.Millisecond, 9),
+		loading:     false,
+		toast:       toasts,
 	}
 
 	epUpdateFunc := model.ctx.Endpoints.UpdateEndpoint

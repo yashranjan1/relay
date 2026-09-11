@@ -1,18 +1,23 @@
 package styles
 
 import (
-	"github.com/charmbracelet/lipgloss"
+	"image/color"
 )
 
 type Theme struct {
-	FooterNameBG      lipgloss.Color
-	FooterNameFGFrom  lipgloss.Color
-	FooterNameFGTo    lipgloss.Color
-	Accent            lipgloss.Color
-	HeadingForeground lipgloss.Color
-	FooterSegmentBG   lipgloss.Color
-	FooterSegmentFG   lipgloss.Color
-	HelpFG            lipgloss.Color
+	FooterNameBG      color.Color
+	Error             color.Color
+	Info              color.Color
+	Warn              color.Color
+	Success           color.Color
+	FooterNameFGFrom  color.Color
+	FooterNameFGTo    color.Color
+	Accent            color.Color
+	HeadingForeground color.Color
+	ToastBG           color.Color
+	FooterSegmentBG   color.Color
+	FooterSegmentFG   color.Color
+	HelpFG            color.Color
 }
 
 var (
@@ -30,4 +35,5 @@ func SetTheme(newTheme Theme) {
 	initRequestStyles()
 	initCollectionStyles()
 	initAppStyles()
+	initLoaderStyles()
 }

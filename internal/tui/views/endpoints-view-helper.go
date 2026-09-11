@@ -1,7 +1,7 @@
 package views
 
 import (
-	"github.com/charmbracelet/bubbles/list"
+	"charm.land/bubbles/v2/list"
 	"github.com/yashranjan1/relay/internal/tui/styles"
 )
 

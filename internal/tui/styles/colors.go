@@ -1,6 +1,6 @@
 package styles
 
-import "github.com/charmbracelet/lipgloss"
+import "charm.land/lipgloss/v2"
 
 var ThemeMap = map[string]Theme{
 	"default":     DefaultTheme,
@@ -18,6 +18,11 @@ var DefaultTheme = Theme{
 	FooterSegmentBG:   lipgloss.Color("#262626"),
 	FooterSegmentFG:   lipgloss.Color("#656565"),
 	HelpFG:            lipgloss.Color("#3C3C3C"),
+	Error:             lipgloss.Color("#FF5555"),
+	Warn:              lipgloss.Color("#D4BD5D"),
+	Info:              lipgloss.Color("#14578F"),
+	Success:           lipgloss.Color("#008000"),
+	ToastBG:           lipgloss.Color("#000000"),
 }
 
 var LightPaperTheme = Theme{
@@ -29,6 +34,11 @@ var LightPaperTheme = Theme{
 	FooterSegmentBG:   lipgloss.Color("#D3D3CD"),
 	FooterSegmentFG:   lipgloss.Color("#586E75"),
 	HelpFG:            lipgloss.Color("#93A1A1"),
+	Error:             lipgloss.Color("#FF5555"),
+	Warn:              lipgloss.Color("#D4BD5D"),
+	Info:              lipgloss.Color("#14578F"),
+	Success:           lipgloss.Color("#008000"),
+	ToastBG:           lipgloss.Color("#000000"),
 }
 
 var ForestTheme = Theme{
@@ -40,6 +50,11 @@ var ForestTheme = Theme{
 	FooterSegmentBG:   lipgloss.Color("#25322F"),
 	FooterSegmentFG:   lipgloss.Color("#97B6AC"),
 	HelpFG:            lipgloss.Color("#4F6C64"),
+	Error:             lipgloss.Color("#FF5555"),
+	Warn:              lipgloss.Color("#D4BD5D"),
+	Info:              lipgloss.Color("#14578F"),
+	Success:           lipgloss.Color("#008000"),
+	ToastBG:           lipgloss.Color("#000000"),
 }
 
 var CyberpunkTheme = Theme{
@@ -51,4 +66,9 @@ var CyberpunkTheme = Theme{
 	FooterSegmentBG:   lipgloss.Color("#241734"),
 	FooterSegmentFG:   lipgloss.Color("#8A78A5"),
 	HelpFG:            lipgloss.Color("#62447D"),
+	Error:             lipgloss.Color("#FF5555"),
+	Warn:              lipgloss.Color("#D4BD5D"),
+	Info:              lipgloss.Color("#14578F"),
+	Success:           lipgloss.Color("#008000"),
+	ToastBG:           lipgloss.Color("#000000"),
 }

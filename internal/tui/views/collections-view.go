@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
 	"github.com/yashranjan1/relay/internal/backend/collections"
 	"github.com/yashranjan1/relay/internal/backend/endpoints"
 	optionsProvider "github.com/yashranjan1/relay/internal/tui/components/OptionsProvider"
@@ -55,15 +55,40 @@ func (c *CollectionsView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	case messages.ItemAdded:
 		_, err := c.manager.Create(context.Background(), msg.Item)
 		if err != nil {
-			// TODO: handle this
+			cmd = func() tea.Msg {
+				return messages.AddToast{
+					Type:    messages.Error,
+					Message: "Can't create collection",
+				}
+			}
+			cmds = append(cmds, cmd)
+			return c, tea.Batch(cmds...)
 		}
 	case messages.RefreshItemsList:
 		c.list.RefreshItems()
 		return c, nil
 	case messages.ItemEdited:
-		c.manager.Update(context.Background(), msg.ItemID, msg.Item)
+		_, err := c.manager.Update(context.Background(), msg.ItemID, msg.Item)
+		if err != nil {
+			cmd = func() tea.Msg {
+				return messages.AddToast{
+					Type:    messages.Error,
+					Message: "Collection update failed",
+				}
+			}
+			cmds = append(cmds, cmd)
+		}
 	case messages.DeleteItem:
-		c.manager.Delete(context.Background(), msg.ItemID)
+		err := c.manager.Delete(context.Background(), msg.ItemID)
+		if err != nil {
+			cmd = func() tea.Msg {
+				return messages.AddToast{
+					Type:    messages.Error,
+					Message: "Collection delete failed",
+				}
+			}
+			cmds = append(cmds, cmd)
+		}
 		c.list.RefreshItems()
 	case messages.ChooseItem[optionsProvider.Option]:
 		c.list.OnBlur()

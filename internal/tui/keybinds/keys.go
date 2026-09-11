@@ -1,7 +1,7 @@
 package keybinds
 
 import (
-	"github.com/charmbracelet/bubbles/key"
+	"charm.land/bubbles/v2/key"
 )
 
 type Keymaps struct {
@@ -17,6 +17,8 @@ type Keymaps struct {
 	SendRequest          key.Binding
 	Next                 key.Binding
 	Prev                 key.Binding
+	Under                key.Binding
+	Over                 key.Binding
 	Save                 key.Binding
 	PrevPage             key.Binding
 	Filter               key.Binding
@@ -24,6 +26,8 @@ type Keymaps struct {
 	CancelWhileFiltering key.Binding
 	AcceptWhileFiltering key.Binding
 	Quit                 key.Binding
+	PageUp               key.Binding
+	PageDown             key.Binding
 }
 
 var Keys = Keymaps{
@@ -38,6 +42,14 @@ var Keys = Keymaps{
 	Save: key.NewBinding(
 		key.WithKeys("ctrl+s"),
 		key.WithHelp("ctrl+s", "save"),
+	),
+	PageUp: key.NewBinding(
+		key.WithKeys("ctrl+u"),
+		key.WithHelp("ctrl+u", "pg up"),
+	),
+	PageDown: key.NewBinding(
+		key.WithKeys("ctrl+d"),
+		key.WithHelp("ctrl+d", "pg down"),
 	),
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
@@ -94,6 +106,14 @@ var Keys = Keymaps{
 	Remove: key.NewBinding(
 		key.WithKeys("x", "backspace"),
 		key.WithHelp("x", "delete"),
+	),
+	Under: key.NewBinding(
+		key.WithKeys("ctrl+j"),
+		key.WithHelp("ctrl+j", "field below"),
+	),
+	Over: key.NewBinding(
+		key.WithKeys("ctrl+k"),
+		key.WithHelp("ctrl+k", "field above"),
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("ctrl+c"),
