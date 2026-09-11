@@ -50,3 +50,4 @@ internal/old_tui/
 docs/node_modules/
 docs/.vitepress/dist/
 docs/.vitepress/cache/
+test_files/

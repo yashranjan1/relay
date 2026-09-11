@@ -35,4 +35,5 @@ func SetTheme(newTheme Theme) {
 	initRequestStyles()
 	initCollectionStyles()
 	initAppStyles()
+	initLoaderStyles()
 }

@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/yashranjan1/relay/internal/log"
+	loader "github.com/yashranjan1/relay/internal/tui/components/Loader"
 	toast "github.com/yashranjan1/relay/internal/tui/components/Toast"
 	"github.com/yashranjan1/relay/internal/tui/keybinds"
 	"github.com/yashranjan1/relay/internal/tui/messages"
@@ -40,6 +42,8 @@ type AppModel struct {
 	keys        []key.Binding
 	help        help.Model
 	errorMsg    string
+	loading     bool
+	loader      *loader.Loader
 }
 
 func (a AppModel) Init() tea.Cmd {
@@ -56,11 +60,23 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.ItemAdded:
 		a.Views[Collections], cmd = a.Views[Collections].Update(messages.RefreshItemsList{})
 		cmds = append(cmds, cmd)
+	case messages.StartLoader:
+		a.loading = true
+		a.loader.SetMessage(msg.Message)
+		cmd = a.loader.Tick()
+		cmds = append(cmds, cmd)
+	case messages.Response:
+		a.loading = false
 	case messages.RemoveToast:
 		a.toast.RemoveToast(msg.ID)
 	case messages.AddToast:
 		cmd = a.toast.AddToast(msg.Type, msg.Message)
 		cmds = append(cmds, cmd)
+	case loader.TickMsg:
+		if a.loading {
+			cmd = a.loader.Update(msg)
+			cmds = append(cmds, cmd)
+		}
 	case tea.WindowSizeMsg:
 		a.height = msg.Height
 		a.width = msg.Width
@@ -91,6 +107,9 @@ func (a AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.focusedView = ViewName(msg.ViewName)
 		cmd = a.Views[a.focusedView].OnFocus()
 		cmds = append(cmds, cmd)
+
+		if a.loading {
+		}
 
 		return a, tea.Batch(cmds...)
 
@@ -184,10 +203,21 @@ func (a AppModel) Header() string {
 }
 
 func (a AppModel) Footer() string {
-	name := styles.ApplyGradientToFooter("REQ")
+	name := styles.ApplyGradientToFooter("RELAY")
 	footerText := styles.FooterSegmentStyle.Render(a.Views[a.focusedView].GetFooterSegment())
-	version := styles.FooterVersionStyle.Width(a.width - lipgloss.Width(name) - lipgloss.Width(footerText)).Render(a.ctx.Version)
-	return lipgloss.JoinHorizontal(lipgloss.Left, name, footerText, version)
+	version := styles.FooterVersionStyle.Render(a.ctx.Version)
+
+	var loader string
+	residualWidth := a.width - (lipgloss.Width(name) + lipgloss.Width(footerText) + lipgloss.Width(version))
+	style := styles.LoaderStyle.Width(residualWidth)
+
+	if a.loading {
+		loader = style.Render(a.loader.View())
+	} else {
+		loader = style.Render("")
+	}
+
+	return lipgloss.JoinHorizontal(lipgloss.Left, name, footerText, loader, version)
 }
 
 func NewAppModel(ctx *Context) AppModel {
@@ -202,6 +232,8 @@ func NewAppModel(ctx *Context) AppModel {
 		ctx:         ctx,
 		help:        help.New(),
 		keys:        appKeybinds,
+		loader:      loader.NewLoader(50*time.Millisecond, 9),
+		loading:     false,
 		toast:       toasts,
 	}
 

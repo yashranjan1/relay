@@ -73,6 +73,9 @@ func (o OptionsProvider[T, U]) Update(msg tea.Msg) (OptionsProvider[T, U], tea.C
 					}
 					return o, func() tea.Msg { return messages.DeleteItem{ItemID: int64(o.GetSelected().ID)} }
 				case key.Matches(msg, o.keys.Choose):
+					if o.GetSelected().ID == -1 {
+						return o, tea.Batch(cmds...)
+					}
 					return o, func() tea.Msg {
 						return messages.ChooseItem[Option]{
 							Item:   o.GetSelected(),
