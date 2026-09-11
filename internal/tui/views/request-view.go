@@ -8,7 +8,6 @@ import (
 	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/list"
-	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/yashranjan1/relay/internal/backend/endpoints"
@@ -48,7 +47,6 @@ type RequestView struct {
 	loading    bool
 	help       help.Model
 	keys       *keybinds.ListKeyMap
-	spinner    spinner.Model
 	client     *http.HTTPManager
 	order      int
 	update     func(context.Context, int64, endpoints.EndpointData) (endpoints.EndpointEntity, error)
@@ -93,7 +91,7 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 		w := r.components[methodPicker].GetWidth()
 		r.components[urlInput].SetWidth(r.width - w)
 
-		topMenu := 4
+		topMenu := 5
 		r.components[responseView], cmd = r.components[responseView].Update(tea.WindowSizeMsg{
 			Height: msg.Height - topMenu,
 			Width:  r.width - topMenu,
@@ -115,6 +113,9 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, keybinds.Keys.Back):
+			if settable, ok := r.components[responseView].(componenttypes.ResponseSettable); ok {
+				settable.EraseState()
+			}
 			return r, func() tea.Msg {
 				return messages.NavigateToView{
 					ViewName: Endpoints,
@@ -140,11 +141,22 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 						Err: err,
 					}
 				}
-				return messages.Response{
+
+				data := messages.Response{
 					Data: res,
 				}
+
+				return data
 			}
-			return r, tea.Batch(r.spinner.Tick, sendMsg)
+
+			loaderMsg := func() tea.Msg {
+				return messages.StartLoader{
+					Message: " Sending",
+				}
+			}
+
+			return r, tea.Batch(loaderMsg, sendMsg)
+
 		case key.Matches(msg, keybinds.Keys.Save):
 			r.Save()
 		}
@@ -153,11 +165,6 @@ func (r *RequestView) Update(msg tea.Msg) (ViewInterface, tea.Cmd) {
 	r.components[r.focused], cmd = r.components[r.focused].Update(msg)
 
 	cmds = append(cmds, cmd)
-
-	if r.loading {
-		r.spinner, cmd = r.spinner.Update(msg)
-		cmds = append(cmds, cmd)
-	}
 
 	return r, tea.Batch(cmds...)
 }
@@ -282,8 +289,6 @@ func NewRequestView(cfg RequestViewConfig) *RequestView {
 	mpConfig := createMethodPickerConfig()
 
 	uiConfig := createURLInputConfig()
-	s := spinner.New()
-	s.Spinner = spinner.Dot
 
 	return &RequestView{
 		components: map[reqFocused]componenttypes.FocusableComponent{
@@ -297,6 +302,5 @@ func NewRequestView(cfg RequestViewConfig) *RequestView {
 		order:     cfg.Order,
 		update:    cfg.Update,
 		client:    cfg.Client,
-		spinner:   s,
 	}
 }

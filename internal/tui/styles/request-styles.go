@@ -30,7 +30,7 @@ func UrlInputStyle(active bool) lipgloss.Style {
 }
 
 func ResponseContentStyle(height, width int) func(...string) string {
-	return lipgloss.NewStyle().Padding(1, 0, 1, 1).Height(height).Width(width).Render
+	return lipgloss.NewStyle().Padding(1, 0, 0, 1).Height(height).Width(width).Render
 }
 
 func ResponseStyle(active bool) func(...string) string {

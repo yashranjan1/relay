@@ -51,3 +51,7 @@ type Response struct {
 }
 
 type RefreshItemsList struct{}
+
+type StartLoader struct {
+	Message string
+}

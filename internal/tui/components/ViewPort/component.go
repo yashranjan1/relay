@@ -32,6 +32,7 @@ func (v *Viewport) EraseState() {
 	v.status = 0
 	v.body = ""
 	v.headers = nil
+	v.viewport.SetContent(v.body)
 }
 
 func (v *Viewport) SetWidth(width int) {

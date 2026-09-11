@@ -33,5 +33,5 @@ func interpolateColor(start, end stdcolor.Color, ratio float64) stdcolor.Color {
 }
 
 func ApplyGradientToFooter(text string) string {
-	return gradientText("REQ", AppTheme.FooterNameFGFrom, AppTheme.FooterNameFGTo, footerNameStyle, footerNameBGStyle)
+	return gradientText(text, AppTheme.FooterNameFGFrom, AppTheme.FooterNameFGTo, footerNameStyle, footerNameBGStyle)
 }
